@@ -1,5 +1,4 @@
-# MSPM
-# *Music Streaming Playlist Manager*
+# *Music Streaming Playlist Manager*(MSPM)
 # Build a music player with repeat, shuffle, and previous track features.
 # This project includes the following members:
 # 1 Do Dinh Van
