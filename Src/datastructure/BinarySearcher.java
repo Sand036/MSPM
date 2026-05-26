@@ -1,14 +1,16 @@
-package Src;
+package Src.datastructure;
 
 public class BinarySearcher {
 
     /**
      * Thuật toán Tìm kiếm nhị phân theo Tên bài hát (Title)
-     * Yêu cầu: Mảng playlist ĐÃ ĐƯỢC SẮP XẾP theo tiêu chí Title trước khi gọi hàm này.
+     * Yêu cầu: Mảng playlist ĐÃ ĐƯỢC SẮP XẾP theo tiêu chí Title trước khi gọi hàm
+     * này.
      * 
      * @param playlist    Mảng các bài hát đã được sắp xếp
      * @param targetTitle Tên bài hát cần tìm
-     * @return Chỉ số (index) của bài hát trong mảng nếu tìm thấy, ngược lại trả về -1
+     * @return Chỉ số (index) của bài hát trong mảng nếu tìm thấy, ngược lại trả về
+     *         -1
      */
     public static int binarySearchByTitle(Song[] playlist, String targetTitle) {
         if (playlist == null || playlist.length == 0) {
@@ -30,7 +32,7 @@ public class BinarySearcher {
                 right = mid - 1; // Tìm ở nửa trái
             }
         }
-        
+
         return -1; // Không tìm thấy
     }
 
@@ -62,7 +64,7 @@ public class BinarySearcher {
                 right = mid - 1;
             }
         }
-        
+
         return -1; // Không tìm thấy
     }
 }
