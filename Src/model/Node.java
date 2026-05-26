@@ -1,4 +1,4 @@
-package model;
+package Src.model;
 
 /**
  * Node bọc Song dùng cho Circular Doubly Linked List.

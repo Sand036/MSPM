@@ -1,7 +1,7 @@
-package datastructure;
+package Src.datastructure;
 
-import model.Node;
-import model.Song;
+import Src.model.Node;
+import Src.model.Song;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,14 +24,15 @@ public class CircularLinkedList {
     }
 
     // ─────────────────────────────────────────────
-    //  INSERT
+    // INSERT
     // ─────────────────────────────────────────────
 
     /**
      * Thêm bài hát vào cuối danh sách.
      */
     public void insert(Song song) {
-        if (song == null) throw new IllegalArgumentException("Song không được null");
+        if (song == null)
+            throw new IllegalArgumentException("Song không được null");
         Node newNode = new Node(song);
 
         if (isEmpty()) {
@@ -53,7 +54,8 @@ public class CircularLinkedList {
      * Thêm bài hát vào đầu danh sách.
      */
     public void insertAtHead(Song song) {
-        if (song == null) throw new IllegalArgumentException("Song không được null");
+        if (song == null)
+            throw new IllegalArgumentException("Song không được null");
         Node newNode = new Node(song);
 
         if (isEmpty()) {
@@ -99,15 +101,17 @@ public class CircularLinkedList {
     }
 
     // ─────────────────────────────────────────────
-    //  DELETE
+    // DELETE
     // ─────────────────────────────────────────────
 
     /**
      * Xóa bài hát theo id.
+     * 
      * @return true nếu xóa thành công, false nếu không tìm thấy.
      */
     public boolean delete(String songId) {
-        if (isEmpty() || songId == null) return false;
+        if (isEmpty() || songId == null)
+            return false;
 
         Node current = head;
         for (int i = 0; i < size; i++) {
@@ -124,7 +128,8 @@ public class CircularLinkedList {
      * Xóa node tại vị trí index (0-based).
      */
     public boolean deleteAt(int index) {
-        if (isEmpty() || index < 0 || index >= size) return false;
+        if (isEmpty() || index < 0 || index >= size)
+            return false;
 
         Node current = head;
         for (int i = 0; i < index; i++) {
@@ -144,8 +149,10 @@ public class CircularLinkedList {
         } else {
             node.prev.next = node.next;
             node.next.prev = node.prev;
-            if (node == head) head = node.next;
-            if (node == tail) tail = node.prev;
+            if (node == head)
+                head = node.next;
+            if (node == tail)
+                tail = node.prev;
         }
         node.next = null;
         node.prev = null;
@@ -153,7 +160,7 @@ public class CircularLinkedList {
     }
 
     // ─────────────────────────────────────────────
-    //  DISPLAY
+    // DISPLAY
     // ─────────────────────────────────────────────
 
     /**
@@ -185,7 +192,8 @@ public class CircularLinkedList {
      */
     public List<Song> toList() {
         List<Song> list = new ArrayList<>();
-        if (isEmpty()) return list;
+        if (isEmpty())
+            return list;
         Node current = head;
         do {
             list.add(current.song);
@@ -195,17 +203,19 @@ public class CircularLinkedList {
     }
 
     // ─────────────────────────────────────────────
-    //  NAVIGATION
+    // NAVIGATION
     // ─────────────────────────────────────────────
 
     /**
      * Lấy node tiếp theo sau node hiện tại.
      * Vì là CDLL nên sau tail sẽ quay về head.
+     * 
      * @param current node hiện tại
      * @return node tiếp theo, hoặc null nếu danh sách trống
      */
     public Node getNextNode(Node current) {
-        if (current == null || isEmpty()) return null;
+        if (current == null || isEmpty())
+            return null;
         return current.next;
     }
 
@@ -213,26 +223,30 @@ public class CircularLinkedList {
      * Lấy node trước node hiện tại.
      */
     public Node getPrevNode(Node current) {
-        if (current == null || isEmpty()) return null;
+        if (current == null || isEmpty())
+            return null;
         return current.prev;
     }
 
     /**
      * Tìm node theo song id.
+     * 
      * @return Node tìm thấy, hoặc null.
      */
     public Node findById(String songId) {
-        if (isEmpty() || songId == null) return null;
+        if (isEmpty() || songId == null)
+            return null;
         Node current = head;
         do {
-            if (current.song.getId().equals(songId)) return current;
+            if (current.song.getId().equals(songId))
+                return current;
             current = current.next;
         } while (current != head);
         return null;
     }
 
     // ─────────────────────────────────────────────
-    //  HELPERS
+    // HELPERS
     // ─────────────────────────────────────────────
 
     public boolean isEmpty() {

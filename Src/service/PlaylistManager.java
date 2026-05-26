@@ -1,4 +1,4 @@
-package service;
+package Src.service;
 
 import datastructure.CircularLinkedList;
 import model.Node;
@@ -23,14 +23,15 @@ public class PlaylistManager {
     }
 
     // ─────────────────────────────────────────────
-    //  ADD
+    // ADD
     // ─────────────────────────────────────────────
 
     /**
      * Thêm bài hát vào cuối playlist.
      */
     public void addSong(Song song) {
-        if (song == null) throw new IllegalArgumentException("Song không được null");
+        if (song == null)
+            throw new IllegalArgumentException("Song không được null");
         playlist.insert(song);
         // Nếu đây là bài đầu tiên, đặt làm currentNode luôn
         if (currentNode == null) {
@@ -42,7 +43,8 @@ public class PlaylistManager {
      * Thêm bài hát vào vị trí cụ thể (0-based).
      */
     public void addSongAt(Song song, int index) {
-        if (song == null) throw new IllegalArgumentException("Song không được null");
+        if (song == null)
+            throw new IllegalArgumentException("Song không được null");
         playlist.insertAt(song, index);
         if (currentNode == null) {
             currentNode = playlist.getHead();
@@ -50,16 +52,18 @@ public class PlaylistManager {
     }
 
     // ─────────────────────────────────────────────
-    //  REMOVE
+    // REMOVE
     // ─────────────────────────────────────────────
 
     /**
      * Xóa bài hát theo id.
      * Nếu bài đang xóa là bài hiện tại, chuyển sang bài tiếp theo.
+     * 
      * @return true nếu xóa thành công
      */
     public boolean removeSong(String songId) {
-        if (songId == null) return false;
+        if (songId == null)
+            return false;
 
         // Nếu bài bị xóa đang được phát → chuyển sang next trước
         if (currentNode != null && currentNode.song.getId().equals(songId)) {
@@ -83,11 +87,12 @@ public class PlaylistManager {
     }
 
     // ─────────────────────────────────────────────
-    //  CURRENT SONG
+    // CURRENT SONG
     // ─────────────────────────────────────────────
 
     /**
      * Lấy bài hát hiện tại đang được phát.
+     * 
      * @return Song hiện tại, hoặc null nếu playlist trống.
      */
     public Song getCurrentSong() {
@@ -96,6 +101,7 @@ public class PlaylistManager {
 
     /**
      * Đặt bài hát hiện tại theo id.
+     * 
      * @return true nếu tìm thấy và đặt thành công.
      */
     public boolean setCurrentSong(String songId) {
@@ -108,31 +114,35 @@ public class PlaylistManager {
     }
 
     // ─────────────────────────────────────────────
-    //  NAVIGATION (dùng nội bộ; NavigationService cũng có thể gọi)
+    // NAVIGATION (dùng nội bộ; NavigationService cũng có thể gọi)
     // ─────────────────────────────────────────────
 
     /**
      * Chuyển sang bài tiếp theo (vòng vòng nhờ CDLL).
+     * 
      * @return Song tiếp theo, hoặc null nếu playlist trống.
      */
     public Song nextSong() {
-        if (playlist.isEmpty() || currentNode == null) return null;
+        if (playlist.isEmpty() || currentNode == null)
+            return null;
         currentNode = playlist.getNextNode(currentNode);
         return currentNode.song;
     }
 
     /**
      * Quay lại bài trước.
+     * 
      * @return Song trước đó, hoặc null nếu playlist trống.
      */
     public Song prevSong() {
-        if (playlist.isEmpty() || currentNode == null) return null;
+        if (playlist.isEmpty() || currentNode == null)
+            return null;
         currentNode = playlist.getPrevNode(currentNode);
         return currentNode.song;
     }
 
     // ─────────────────────────────────────────────
-    //  HELPERS
+    // HELPERS
     // ─────────────────────────────────────────────
 
     /**

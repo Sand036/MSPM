@@ -1,4 +1,4 @@
-package model;
+package Src.model;
 
 /**
  * Model đại diện cho một bài hát trong playlist.
@@ -67,8 +67,10 @@ public class Song {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
         Song song = (Song) obj;
         return id != null && id.equals(song.id);
     }
