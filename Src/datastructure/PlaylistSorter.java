@@ -1,7 +1,7 @@
-package Src;
+package Src.datastructure;
 
 public class PlaylistSorter {
-    
+
     // Enum để xác định tiêu chí sắp xếp (Tên bài, Ca sĩ, Lượt nghe)
     public enum SortCriteria {
         TITLE, ARTIST, PLAY_COUNT
@@ -9,6 +9,7 @@ public class PlaylistSorter {
 
     /**
      * Triển khai thuật toán Merge Sort để sắp xếp mảng bài hát
+     * 
      * @param playlist Mảng các bài hát (Song)
      * @param criteria Tiêu chí sắp xếp
      */
@@ -23,11 +24,11 @@ public class PlaylistSorter {
     private static void mergeSortHelper(Song[] playlist, Song[] temp, int left, int right, SortCriteria criteria) {
         if (left < right) {
             int mid = left + (right - left) / 2;
-            
+
             // Chia nhỏ mảng thành 2 nửa
             mergeSortHelper(playlist, temp, left, mid, criteria);
             mergeSortHelper(playlist, temp, mid + 1, right, criteria);
-            
+
             // Gộp 2 nửa đã sắp xếp lại với nhau
             merge(playlist, temp, left, mid, right, criteria);
         }
@@ -39,9 +40,9 @@ public class PlaylistSorter {
             temp[i] = playlist[i];
         }
 
-        int i = left;       // Con trỏ duyệt nửa trái
-        int j = mid + 1;    // Con trỏ duyệt nửa phải
-        int k = left;       // Con trỏ lưu vào mảng chính
+        int i = left; // Con trỏ duyệt nửa trái
+        int j = mid + 1; // Con trỏ duyệt nửa phải
+        int k = left; // Con trỏ lưu vào mảng chính
 
         // So sánh và gộp
         while (i <= mid && j <= right) {

@@ -1,4 +1,4 @@
-package Src;
+package Src.model;
 
 public class Song {
     private String title;
