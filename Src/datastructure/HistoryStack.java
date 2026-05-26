@@ -135,7 +135,7 @@ public class HistoryStack {
     @Override
     public String toString() {
         if (isEmpty())
-            return "HistoryStack: [rỗng]";
+            return "HistoryStack: [Null]";
 
         StringBuilder sb = new StringBuilder("HistoryStack (top → bottom):\n");
         for (int i = top; i >= 0; i--) {
