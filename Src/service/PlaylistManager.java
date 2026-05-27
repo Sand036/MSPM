@@ -1,8 +1,8 @@
 package Src.service;
 
-import datastructure.CircularLinkedList;
-import model.Node;
-import model.Song;
+import Src.datastructure.CircularLinkedList;
+import Src.model.Node;
+import Src.model.Song;
 
 import java.util.List;
 
