@@ -35,20 +35,14 @@ public class HistoryStack {
     // PHẦN 3: CÁC THAO TÁC CHÍNH (CORE OPERATIONS)
     // =========================================================
 
-    /**
-     * push() — Thêm bài hát vào đỉnh Stack (khi bấm Next)
-     * Nếu Stack đầy: xóa bài cũ nhất ở đáy để nhường chỗ
-     */
     public void push(Song song) {
+
         if (song == null)
             return;
 
+        // Stack đầy -> báo lỗi
         if (isFull()) {
-            // Dịch toàn bộ mảng xuống 1 vị trí (xóa đáy, nhường chỗ đỉnh)
-            for (int i = 0; i < capacity - 1; i++) {
-                stack[i] = stack[i + 1];
-            }
-            top = capacity - 2; // top lùi lại 1 vì đã dịch
+            throw new IllegalStateException("Stack Overflow! History is full.");
         }
 
         top++;
