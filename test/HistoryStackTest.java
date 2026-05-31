@@ -5,8 +5,6 @@ import Src.model.Song;
 
 /**
  * HistoryStackTest — kiểm tra toàn bộ hành vi của HistoryStack.
- *
- * Chạy: javac + java (không dùng JUnit — chạy thủ công trong main)
  * Pass/Fail in ra console.
  */
 public class HistoryStackTest {
