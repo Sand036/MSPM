@@ -40,7 +40,6 @@ public class HistoryStack {
         if (song == null)
             return;
 
-        // Stack đầy -> báo lỗi
         if (isFull()) {
             throw new IllegalStateException("Stack Overflow! History is full.");
         }
@@ -49,24 +48,16 @@ public class HistoryStack {
         stack[top] = song;
     }
 
-    /**
-     * pop() — Lấy bài hát ở đỉnh Stack ra (khi bấm Previous)
-     * Trả về null nếu Stack rỗng (không có lịch sử)
-     */
     public Song pop() {
         if (isEmpty())
             return null;
 
         Song song = stack[top];
-        stack[top] = null; // giải phóng tham chiếu, tránh memory leak
+        stack[top] = null;
         top--;
         return song;
     }
 
-    /**
-     * peek() — Xem bài hát ở đỉnh Stack MÀ KHÔNG lấy ra
-     * Dùng để hiển thị "bài trước đó là gì" trên UI
-     */
     public Song peek() {
         if (isEmpty())
             return null;
@@ -97,9 +88,6 @@ public class HistoryStack {
     // PHẦN 5: TIỆN ÍCH (UTILITIES)
     // =========================================================
 
-    /**
-     * clear() — Xóa toàn bộ lịch sử (khi bấm Shuffle, reset history)
-     */
     public void clear() {
         for (int i = 0; i <= top; i++) {
             stack[i] = null;
@@ -107,25 +95,17 @@ public class HistoryStack {
         top = -1;
     }
 
-    /**
-     * getHistory() — Trả về mảng bài hát từ mới nhất → cũ nhất
-     * Dùng để hiển thị danh sách Recently Played trên UI
-     */
     public Song[] getHistory() {
         if (isEmpty())
             return new Song[0];
 
         Song[] history = new Song[top + 1];
         for (int i = 0; i <= top; i++) {
-            // Đảo ngược thứ tự: đỉnh stack → index 0 của history
             history[top - i] = stack[i];
         }
         return history;
     }
 
-    /**
-     * toString() — In ra Stack để debug
-     */
     @Override
     public String toString() {
         if (isEmpty())
