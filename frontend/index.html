@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Streaming Playlist Manager</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <h1>Music Streaming Playlist Manager</h1>
+    </header>
+
+    <main>
+        <section id="current-song" class="card">
+            <h2>Current Song</h2>
+            <div id="current-song-info">
+                <p class="no-song">No song playing</p>
+            </div>
+        </section>
+
+        <section id="playback-controls" class="card">
+            <h2>Playback Controls</h2>
+            <div class="controls-row">
+                <button id="btn-prev" class="btn btn-control" title="Previous">⏮</button>
+                <button id="btn-shuffle" class="btn btn-control" title="Shuffle">🔀</button>
+                <button id="btn-next" class="btn btn-control" title="Next">⏭</button>
+            </div>
+            <div class="repeat-row">
+                <label for="repeat-mode">Repeat Mode:</label>
+                <select id="repeat-mode">
+                    <option value="OFF">OFF</option>
+                    <option value="ONE">ONE</option>
+                    <option value="ALL">ALL</option>
+                </select>
+            </div>
+        </section>
+
+        <section id="search-section" class="card">
+            <h2>Search</h2>
+            <div class="search-row">
+                <input type="text" id="search-input" placeholder="Search song title...">
+                <button id="btn-search" class="btn btn-primary">Search</button>
+            </div>
+            <div id="search-results"></div>
+        </section>
+
+        <section id="add-song" class="card">
+            <h2>Add Song</h2>
+            <form id="add-song-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="song-id">ID</label>
+                        <input type="number" id="song-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="song-title">Title</label>
+                        <input type="text" id="song-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="song-artist">Artist</label>
+                        <input type="text" id="song-artist" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="song-duration">Duration (s)</label>
+                        <input type="number" id="song-duration" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Song</button>
+            </form>
+        </section>
+
+        <section id="sort-section" class="card">
+            <h2>Sort Playlist</h2>
+            <div class="sort-row">
+                <select id="sort-type">
+                    <option value="id">Sort by ID</option>
+                    <option value="title">Sort by Title</option>
+                </select>
+                <button id="btn-sort" class="btn btn-primary">Sort</button>
+            </div>
+        </section>
+
+        <section id="playlist-section" class="card">
+            <h2>Playlist</h2>
+            <div class="table-wrapper">
+                <table id="playlist-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Artist</th>
+                            <th>Duration</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="playlist-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="recently-played" class="card">
+            <h2>Recently Played</h2>
+            <ul id="history-stack"></ul>
+        </section>
+
+        <section id="visualization" class="card">
+            <h2>DSA Visualization</h2>
+            <div id="viz-playlist" class="viz-section">
+                <h3>Circular Linked List</h3>
+                <div id="circular-list"></div>
+            </div>
+            <div id="viz-history" class="viz-section">
+                <h3>History Stack</h3>
+                <div id="stack-display"></div>
+            </div>
+            <div id="viz-shuffle" class="viz-section">
+                <h3>Shuffle Animation</h3>
+                <div id="shuffle-animation" class="shuffle-hidden"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/visualizer.js"></script>
+    <script src="js/player.js"></script>
+</body>
+</html>
