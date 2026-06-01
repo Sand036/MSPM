@@ -8,6 +8,7 @@ public class Song {
     private String title;
     private String artist;
     private int duration; // tính bằng giây
+    private int playCount; // lượt nghe
 
     public Song(String id, String title, String artist, int duration) {
         this.id = id;
@@ -33,6 +34,10 @@ public class Song {
         return duration;
     }
 
+    public int getPlayCount() {
+        return playCount;
+    }
+
     // Setters
     public void setId(String id) {
         this.id = id;
@@ -48,6 +53,10 @@ public class Song {
 
     public void setDuration(int duration) {
         this.duration = duration;
+    }
+
+    public void setPlayCount(int playCount) {
+        this.playCount = playCount;
     }
 
     /**
