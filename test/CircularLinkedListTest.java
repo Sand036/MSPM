@@ -1,8 +1,8 @@
 package test;
 
-import Src.model.Song;
-import Src.model.Node;
-import Src.datastructure.CircularLinkedList;
+import src.model.Song;
+import src.model.Node;
+import src.datastructure.CircularLinkedList;
 
 import java.util.List;
 
