@@ -1,6 +1,6 @@
-package Src.datastructure;
+package src.datastructure;
 
-import Src.model.Song;
+import src.model.Song;
 
 public class PlaylistSorter {
 
@@ -15,7 +15,7 @@ public class PlaylistSorter {
         Song[] temp = new Song[playlist.length];
         mergeSortHelper(playlist, temp, 0, playlist.length - 1, criteria);
     }
- 
+
     private static void mergeSortHelper(Song[] playlist, Song[] temp, int left, int right, SortCriteria criteria) {
         if (left < right) {
             int mid = left + (right - left) / 2;
