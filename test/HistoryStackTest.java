@@ -1,7 +1,7 @@
 package test;
 
-import Src.datastructure.HistoryStack;
-import Src.model.Song;
+import src.datastructure.HistoryStack;
+import src.model.Song;
 
 /**
  * HistoryStackTest — kiểm tra toàn bộ hành vi của HistoryStack.
