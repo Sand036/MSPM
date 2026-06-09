@@ -1,4 +1,4 @@
-package Src.model;
+package src.model;
 
 /**
  * Model đại diện cho một bài hát trong playlist.
