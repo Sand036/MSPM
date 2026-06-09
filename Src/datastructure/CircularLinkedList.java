@@ -1,7 +1,7 @@
-package Src.datastructure;
+package src.datastructure;
 
-import Src.model.Node;
-import Src.model.Song;
+import src.model.Node;
+import src.model.Song;
 
 import java.util.ArrayList;
 import java.util.List;
