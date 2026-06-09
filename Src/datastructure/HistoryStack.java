@@ -1,6 +1,6 @@
-package Src.datastructure;
+package src.datastructure;
 
-import Src.model.Song;
+import src.model.Song;
 
 public class HistoryStack {
 
