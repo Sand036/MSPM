@@ -28,6 +28,14 @@ public class BinarySearcher {
         return -1;
     }
 
+    public static Song searchByTitle(Song[] playlist, String targetTitle) {
+        int index = binarySearchByTitle(playlist, targetTitle);
+        if (index != -1) {
+            return playlist[index];
+        }
+        return null;
+    }
+
     public static int binarySearchByArtist(Song[] playlist, String targetArtist) {
         if (playlist == null || playlist.length == 0) {
             return -1;
@@ -50,5 +58,13 @@ public class BinarySearcher {
         }
 
         return -1;
+    }
+
+    public static Song searchByArtist(Song[] playlist, String targetArtist) {
+        int index = binarySearchByArtist(playlist, targetArtist);
+        if (index != -1) {
+            return playlist[index];
+        }
+        return null;
     }
 }

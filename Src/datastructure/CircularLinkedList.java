@@ -188,6 +188,20 @@ public class CircularLinkedList {
     }
 
     /**
+     * Chuyển dữ liệu từ CircularLinkedList sang mảng Song[]
+     * để hỗ trợ cho việc sắp xếp và tìm kiếm mà không ảnh hưởng playlist gốc.
+     */
+    public Song[] toArray() {
+        Song[] arr = new Song[size];
+        Node current = head;
+        for (int i = 0; i < size; i++) {
+            arr[i] = current.getSong();
+            current = current.next;
+        }
+        return arr;
+    }
+
+    /**
      * Trả về danh sách Song dưới dạng List (để serialize hoặc test).
      */
     public List<Song> toList() {

@@ -15,6 +15,10 @@ public class Node {
         this.prev = null;
     }
 
+    public Song getSong() {
+        return song;
+    }
+
     @Override
     public String toString() {
         return "Node{song=" + (song != null ? song.getTitle() : "null") + "}";

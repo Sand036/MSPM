@@ -161,6 +161,14 @@ public class PlaylistManager {
     }
 
     /**
+     * Trả về danh sách bài hát dưới dạng mảng Song[]
+     * phục vụ cho các thuật toán tìm kiếm và sắp xếp.
+     */
+    public Song[] getSongsArray() {
+        return playlist.toArray();
+    }
+
+    /**
      * Số lượng bài hát trong playlist.
      */
     public int getSize() {
