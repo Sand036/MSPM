@@ -5,7 +5,7 @@ import src.model.Song;
 public class PlaylistSorter {
 
     public enum SortCriteria {
-        TITLE, ARTIST, PLAY_COUNT
+        ID, TITLE, ARTIST, PLAY_COUNT
     }
 
     public static void mergeSort(Song[] playlist, SortCriteria criteria) {
@@ -14,6 +14,13 @@ public class PlaylistSorter {
         }
         Song[] temp = new Song[playlist.length];
         mergeSortHelper(playlist, temp, 0, playlist.length - 1, criteria);
+    }
+
+    public static Song[] sortById(Song[] songs) {
+        if (songs == null) return null;
+        Song[] copy = songs.clone();
+        mergeSort(copy, SortCriteria.ID);
+        return copy;
     }
 
     public static Song[] sortByTitle(Song[] songs) {
@@ -77,6 +84,7 @@ public class PlaylistSorter {
 
     private static int compare(Song s1, Song s2, SortCriteria criteria) {
         return switch (criteria) {
+            case ID -> s1.getId().compareToIgnoreCase(s2.getId());
             case TITLE -> s1.getTitle().compareToIgnoreCase(s2.getTitle());
             case ARTIST -> s1.getArtist().compareToIgnoreCase(s2.getArtist());
             case PLAY_COUNT -> Integer.compare(s2.getPlayCount(), s1.getPlayCount());

@@ -36,6 +36,66 @@
             </div>
         </section>
 
+        <!-- ══════ Song Library from CSV ══════ -->
+        <section id="library-section" class="card">
+            <h2>📚 Song Library <span id="library-total-badge" class="badge">0 songs</span></h2>
+            <p class="section-desc">Browse songs from CSV and add them to your playlist by filtering attributes.</p>
+
+            <div class="library-filters">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="lib-filter-title">🔍 Title</label>
+                        <input type="text" id="lib-filter-title" placeholder="Filter by title...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="lib-filter-artist">🎤 Artist</label>
+                        <select id="lib-filter-artist">
+                            <option value="">All Artists</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="lib-filter-min-dur">⏱ Min Duration (s)</label>
+                        <input type="number" id="lib-filter-min-dur" placeholder="e.g. 120" min="0">
+                    </div>
+                    <div class="filter-group">
+                        <label for="lib-filter-max-dur">⏱ Max Duration (s)</label>
+                        <input type="number" id="lib-filter-max-dur" placeholder="e.g. 480" min="0">
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button id="btn-lib-filter" class="btn btn-primary">🔎 Filter</button>
+                    <button id="btn-lib-reset" class="btn btn-secondary">↻ Reset</button>
+                    <button id="btn-lib-add-selected" class="btn btn-success" disabled>➕ Add Selected (0)</button>
+                    <button id="btn-lib-add-all-filtered" class="btn btn-accent">📥 Add All Filtered</button>
+                </div>
+            </div>
+
+            <div class="table-wrapper" id="library-table-wrapper">
+                <table id="library-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="lib-select-all" title="Select all on this page"></th>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Artist</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="library-body"></tbody>
+                </table>
+            </div>
+
+            <div id="library-pagination" class="pagination">
+                <button id="lib-page-prev" class="btn btn-sm" disabled>◀ Prev</button>
+                <span id="lib-page-info">Page 1 / 1</span>
+                <button id="lib-page-next" class="btn btn-sm" disabled>Next ▶</button>
+            </div>
+        </section>
+
         <section id="search-section" class="card">
             <h2>Search</h2>
             <div class="search-row">
@@ -51,7 +111,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="song-id">ID</label>
-                        <input type="number" id="song-id" required>
+                        <input type="text" id="song-id" required>
                     </div>
                     <div class="form-group">
                         <label for="song-title">Title</label>
@@ -82,7 +142,7 @@
         </section>
 
         <section id="playlist-section" class="card">
-            <h2>Playlist</h2>
+            <h2>Playlist <span id="playlist-count-badge" class="badge">0 songs</span></h2>
             <div class="table-wrapper">
                 <table id="playlist-table">
                     <thead>

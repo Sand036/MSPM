@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8080';
+const BASE_URL = 'http://localhost:8085';
 
 async function request(method, url, body) {
     const opts = {
@@ -55,4 +55,25 @@ function searchSong(title) {
 
 function sortPlaylist(type) {
     return request('GET', `/sort?type=${encodeURIComponent(type)}`);
+}
+
+// ─── CSV Library API ─────────────────────────────────────────
+function getCsvSongs(params = {}) {
+    const query = new URLSearchParams();
+    if (params.title) query.set('title', params.title);
+    if (params.artist) query.set('artist', params.artist);
+    if (params.minDuration) query.set('minDuration', params.minDuration);
+    if (params.maxDuration) query.set('maxDuration', params.maxDuration);
+    if (params.page) query.set('page', params.page);
+    if (params.pageSize) query.set('pageSize', params.pageSize);
+    const qs = query.toString();
+    return request('GET', `/csv-songs${qs ? '?' + qs : ''}`);
+}
+
+function addCsvSongsById(ids) {
+    return request('POST', '/csv-songs/add', { ids });
+}
+
+function addCsvSongsFiltered(filters) {
+    return request('POST', '/csv-songs/add-filtered', filters);
 }

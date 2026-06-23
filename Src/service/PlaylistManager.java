@@ -14,12 +14,19 @@ import java.util.List;
  */
 public class PlaylistManager {
 
+    public enum RepeatMode { OFF, ONE, ALL }
+    private RepeatMode repeatMode = RepeatMode.ALL;
+
     private final CircularLinkedList playlist;
     private Node currentNode; // bài đang phát
 
     public PlaylistManager() {
         this.playlist = new CircularLinkedList();
         this.currentNode = null;
+    }
+
+    public void setRepeatMode(RepeatMode mode) {
+        this.repeatMode = mode;
     }
 
     // ─────────────────────────────────────────────
@@ -123,8 +130,25 @@ public class PlaylistManager {
      * @return Song tiếp theo, hoặc null nếu playlist trống.
      */
     public Song nextSong() {
-        if (playlist.isEmpty() || currentNode == null)
+        if (playlist.isEmpty())
             return null;
+            
+        if (currentNode == null) {
+            currentNode = playlist.getHead();
+            return currentNode.song;
+        }
+            
+        if (repeatMode == RepeatMode.ONE) {
+            return currentNode.song;
+        }
+        
+        if (repeatMode == RepeatMode.OFF) {
+            if (currentNode == playlist.getTail()) {
+                currentNode = null;
+                return null;
+            }
+        }
+        
         currentNode = playlist.getNextNode(currentNode);
         return currentNode.song;
     }
@@ -135,8 +159,18 @@ public class PlaylistManager {
      * @return Song trước đó, hoặc null nếu playlist trống.
      */
     public Song prevSong() {
-        if (playlist.isEmpty() || currentNode == null)
-            return null;
+        if (playlist.isEmpty()) return null;
+        if (currentNode == null) {
+            currentNode = playlist.getTail();
+            return currentNode.song;
+        }
+        
+        if (repeatMode == RepeatMode.OFF) {
+            if (currentNode == playlist.getHead()) {
+                return currentNode.song;
+            }
+        }
+        
         currentNode = playlist.getPrevNode(currentNode);
         return currentNode.song;
     }
