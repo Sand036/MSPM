@@ -189,7 +189,7 @@ function renderPlaylist(songs) {
                 </span>
             </td>
             <td class="track-col-title">
-                <span class="track-title${isActive ? ' track-title-active' : ''}">${escapeHtml(song.title)}</span>
+                <span class="track-title">${escapeHtml(song.title)}</span>
             </td>
             <td class="track-col-artist"><span class="track-artist">${escapeHtml(song.artist)}</span></td>
             <td class="track-col-duration"><span class="track-duration">${formatDuration(song.duration)}</span></td>
