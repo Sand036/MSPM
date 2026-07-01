@@ -41,6 +41,14 @@ function shufflePlaylist() {
     return request('POST', '/shuffle');
 }
 
+function getCurrentSong() {
+    return request('GET', '/current-song');
+}
+
+function playSong() {
+    return request('POST', '/play');
+}
+
 function setRepeatMode(mode) {
     return request('POST', '/repeat', { mode });
 }

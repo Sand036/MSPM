@@ -110,6 +110,37 @@ public class MainServer {
             }
         });
 
+        server.createContext("/current-song", exchange -> {
+            cors(exchange);
+            switch (exchange.getRequestMethod()) {
+                case "GET" -> {
+                    Song current = playlistManager.getCurrentSong();
+                    sendResponse(exchange, 200, songToJson(current));
+                }
+                case "OPTIONS" -> exchange.sendResponseHeaders(200, -1);
+                default -> exchange.sendResponseHeaders(405, -1);
+            }
+        });
+
+        server.createContext("/play", exchange -> {
+            cors(exchange);
+            switch (exchange.getRequestMethod()) {
+                case "POST" -> {
+                    Song current = playlistManager.getCurrentSong();
+                    if (current == null && !playlistManager.isEmpty()) {
+                        List<Song> all = playlistManager.getAllSongs();
+                        if (!all.isEmpty()) {
+                            playlistManager.setCurrentSong(all.get(0).getId());
+                            current = playlistManager.getCurrentSong();
+                        }
+                    }
+                    sendResponse(exchange, 200, songToJson(current));
+                }
+                case "OPTIONS" -> exchange.sendResponseHeaders(200, -1);
+                default -> exchange.sendResponseHeaders(405, -1);
+            }
+        });
+
         server.createContext("/shuffle", exchange -> {
             cors(exchange);
             switch (exchange.getRequestMethod()) {

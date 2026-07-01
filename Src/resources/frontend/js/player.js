@@ -1,19 +1,22 @@
 let currentSong = null;
 let currentPlaylist = [];
+let isPlaying = false;
 
 // ─── Library state ───────────────────────────────────────────
 let libCurrentPage = 1;
 let libTotalPages = 1;
 let libSelectedIds = new Set();
 
-document.addEventListener('DOMContentLoaded', () => {
-    loadPlaylist();
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadPlaylist();
+    await loadCurrentSong();
     loadHistory();
     loadLibrary();
     setupEventListeners();
 });
 
 function setupEventListeners() {
+    document.getElementById('btn-play').addEventListener('click', onPlayPause);
     document.getElementById('btn-next').addEventListener('click', onNext);
     document.getElementById('btn-prev').addEventListener('click', onPrevious);
     document.getElementById('btn-shuffle').addEventListener('click', onShuffle);
@@ -110,7 +113,12 @@ function renderCurrentSong(song) {
         return;
     }
 
+    const statusIcon = isPlaying
+        ? '<span class="playing-indicator">▶ Playing</span>'
+        : '<span class="paused-indicator">⏸ Paused</span>';
+
     info.innerHTML = `
+        ${statusIcon}
         <span class="song-tag">ID <span>${song.id}</span></span>
         <span class="song-tag">Title <span>${escapeHtml(song.title)}</span></span>
         <span class="song-tag">Artist <span>${escapeHtml(song.artist)}</span></span>
@@ -144,6 +152,56 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+async function loadCurrentSong() {
+    try {
+        const song = await getCurrentSong();
+        if (song) {
+            renderCurrentSong(song);
+            highlightActiveSong(song);
+            renderCircularList(currentPlaylist, song.id);
+        } else if (currentPlaylist.length > 0) {
+            const song = await playSong();
+            if (song) {
+                renderCurrentSong(song);
+                highlightActiveSong(song);
+                renderCircularList(currentPlaylist, song.id);
+            }
+        }
+        updatePlayButton();
+    } catch (err) {
+        console.error('Failed to load current song:', err);
+    }
+}
+
+async function onPlayPause() {
+    if (isPlaying) {
+        isPlaying = false;
+        updatePlayButton();
+        renderCurrentSong(currentSong);
+        return;
+    }
+    if (!currentSong && currentPlaylist.length > 0) {
+        try {
+            const song = await playSong();
+            renderCurrentSong(song);
+            highlightActiveSong(song);
+            renderCircularList(currentPlaylist, song ? song.id : null);
+        } catch (err) {
+            console.error('Play failed:', err);
+            return;
+        }
+    }
+    isPlaying = true;
+    updatePlayButton();
+    renderCurrentSong(currentSong);
+}
+
+function updatePlayButton() {
+    const btn = document.getElementById('btn-play');
+    btn.textContent = isPlaying ? '⏸' : '▶';
+    btn.title = isPlaying ? 'Pause' : 'Play';
+}
+
 async function onNext() {
     try {
         const song = await playNext();
@@ -151,6 +209,10 @@ async function onNext() {
         highlightActiveSong(song);
         renderCircularList(currentPlaylist, song ? song.id : null);
         loadHistory();
+        if (song) {
+            isPlaying = true;
+            updatePlayButton();
+        }
     } catch (err) {
         console.error('Next failed:', err);
     }
@@ -163,6 +225,10 @@ async function onPrevious() {
         highlightActiveSong(song);
         renderCircularList(currentPlaylist, song ? song.id : null);
         loadHistory();
+        if (song) {
+            isPlaying = true;
+            updatePlayButton();
+        }
     } catch (err) {
         console.error('Previous failed:', err);
     }
