@@ -72,7 +72,6 @@ function setupEventListeners() {
     });
     document.getElementById('btn-lib-reset').addEventListener('click', onLibReset);
     document.getElementById('btn-lib-add-selected').addEventListener('click', onLibAddSelected);
-    document.getElementById('btn-lib-add-all-filtered').addEventListener('click', onLibAddAllFiltered);
     document.getElementById('lib-page-prev').addEventListener('click', () => {
         if (libCurrentPage > 1) { libCurrentPage--; loadLibrary(); }
     });
@@ -107,7 +106,6 @@ async function loadPlaylist() {
 async function loadHistory() {
     try {
         const history = await getHistory();
-        renderHistory(history);
         renderHistoryStack(history);
     } catch (err) {
         console.error('Failed to load history:', err);
@@ -120,7 +118,7 @@ function renderPlaylist(songs) {
         tbody.innerHTML = `<tr><td colspan="5" class="empty-state">
             <div class="empty-icon">🎵</div>
             <p>Your playlist is empty</p>
-            <p class="empty-hint">Browse the Song Library above and add songs to get started!</p>
+            <p class="empty-hint">Browse the Song Library and add songs to get started!</p>
         </td></tr>`;
         return;
     }
@@ -220,18 +218,6 @@ function renderCurrentSong(song) {
     `;
 }
 
-function renderHistory(history) {
-    const list = document.getElementById('history-stack');
-    if (!history || history.length === 0) {
-        list.innerHTML = '<li style="color:#666;border-left-color:#555;">No recently played songs</li>';
-        return;
-    }
-
-    list.innerHTML = history.map((song, i) => {
-        const label = i === 0 ? 'Top' : '';
-        return `<li>${label ? `<span style="color:#1DB954;font-weight:600;">Top</span>` : `<span>${escapeHtml(song.title)}</span>`} <span style="color:#888;">${escapeHtml(song.artist)}</span></li>`;
-    }).join('');
-}
 
 function formatDuration(seconds) {
     const m = Math.floor(seconds / 60);
@@ -432,6 +418,28 @@ async function onSearchType() {
     }, 250);
 }
 
+async function onAddToPlaylist(id) {
+    try {
+        const song = currentPlaylist.find(s => String(s.id) === String(id));
+        if (song) {
+            showToast('Song is already in your playlist');
+            return;
+        }
+        const data = await getCsvSongs({ page: 1, pageSize: 1000 });
+        if (data && data.songs) {
+            const found = data.songs.find(s => String(s.id) === String(id));
+            if (found) {
+                await addSong({ id: found.id, title: found.title, artist: found.artist, duration: found.duration });
+                await loadPlaylist();
+                loadLibrary();
+                showToast(`Added "${found.title}" to playlist`);
+            }
+        }
+    } catch (err) {
+        console.error('Add to playlist failed:', err);
+    }
+}
+
 async function onDelete(id) {
     if (!confirm('Are you sure you want to delete this song?')) return;
 
@@ -441,29 +449,12 @@ async function onDelete(id) {
         if (currentSong && currentSong.id === id) {
             renderCurrentSong(null);
         }
-        // Refresh library to update "in playlist" status
         loadLibrary();
     } catch (err) {
         console.error('Delete song failed:', err);
     }
 }
 
-async function onSort() {
-    const type = document.getElementById('sort-type').value;
-    try {
-        const songs = await sortPlaylist(type);
-        currentPlaylist = songs;
-        renderPlaylist(currentPlaylist);
-        if (currentSong) {
-            highlightActiveSong(currentSong);
-            renderCircularList(currentPlaylist, currentSong.id);
-        } else {
-            renderCircularList(currentPlaylist, null);
-        }
-    } catch (err) {
-        console.error('Sort failed:', err);
-    }
-}
 
 function highlightActiveSong(song) {
     const rows = document.querySelectorAll('#playlist-body .tracklist-row');
@@ -482,7 +473,6 @@ function highlightActiveSong(song) {
 function getLibFilters() {
     return {
         title: document.getElementById('lib-filter-title').value.trim(),
-        artist: document.getElementById('lib-filter-artist').value,
         minDuration: document.getElementById('lib-filter-min-dur').value || undefined,
         maxDuration: document.getElementById('lib-filter-max-dur').value || undefined,
         page: libCurrentPage,
@@ -498,20 +488,6 @@ async function loadLibrary() {
         // Update badge
         const badge = document.getElementById('library-total-badge');
         if (badge) badge.textContent = `${data.total} songs`;
-
-        // Populate artist dropdown (only on first load or reset)
-        const artistSelect = document.getElementById('lib-filter-artist');
-        if (artistSelect.options.length <= 1 && data.artists) {
-            const currentVal = artistSelect.value;
-            artistSelect.innerHTML = '<option value="">All Artists</option>';
-            data.artists.forEach(a => {
-                const opt = document.createElement('option');
-                opt.value = a;
-                opt.textContent = a;
-                artistSelect.appendChild(opt);
-            });
-            artistSelect.value = currentVal;
-        }
 
         // Render table
         renderLibraryTable(data.songs);
@@ -608,14 +584,10 @@ function updateSelectedCount() {
 
 function onLibReset() {
     document.getElementById('lib-filter-title').value = '';
-    document.getElementById('lib-filter-artist').value = '';
     document.getElementById('lib-filter-min-dur').value = '';
     document.getElementById('lib-filter-max-dur').value = '';
     libCurrentPage = 1;
     libSelectedIds.clear();
-    // Reset artist dropdown to re-populate
-    const artistSelect = document.getElementById('lib-filter-artist');
-    artistSelect.innerHTML = '<option value="">All Artists</option>';
     loadLibrary();
 }
 
@@ -636,30 +608,6 @@ async function onLibAddSelected() {
         console.error('Add selected failed:', err);
     }
     updateSelectedCount();
-}
-
-async function onLibAddAllFiltered() {
-    const filters = getLibFilters();
-    const btn = document.getElementById('btn-lib-add-all-filtered');
-    btn.disabled = true;
-    btn.textContent = '⏳ Adding...';
-
-    try {
-        const result = await addCsvSongsFiltered({
-            title: filters.title || '',
-            artist: filters.artist || '',
-            minDuration: parseInt(filters.minDuration) || 0,
-            maxDuration: parseInt(filters.maxDuration) || 0,
-        });
-        await loadPlaylist();
-        await loadLibrary();
-        showToast(`Added ${result.added} songs to playlist! (Total: ${result.total})`);
-    } catch (err) {
-        console.error('Add all filtered failed:', err);
-    }
-
-    btn.disabled = false;
-    btn.textContent = '📥 Add All Filtered';
 }
 
 // ═══════════════════════════════════════════════════════════════

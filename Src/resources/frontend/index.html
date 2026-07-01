@@ -133,24 +133,38 @@
                     </div>
                 </section>
 
-
+                <section id="playlist-section" class="card">
+                    <div class="card-header">
+                        <h2>Your Playlist <span id="playlist-count-badge" class="badge">0 songs</span></h2>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="playlist-table" class="tracklist-table">
+                            <thead>
+                                <tr>
+                                    <th class="track-col-num">#</th>
+                                    <th class="track-col-title">Title</th>
+                                    <th class="track-col-artist">Artist</th>
+                                    <th class="track-col-duration">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                    </th>
+                                    <th class="track-col-action"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="playlist-body"></tbody>
+                        </table>
+                    </div>
+                </section>
 
                 <section id="library-section" class="card">
                     <div class="card-header">
                         <h2>Song Library <span id="library-total-badge" class="badge">0 songs</span></h2>
                     </div>
-                    <p class="section-desc">Browse songs from the CSV catalog. Filter and add to your playlist.</p>
+                    <p class="section-desc">Browse songs from the CSV catalog. Use filters to narrow down and add songs to your playlist.</p>
                     <div class="library-filters">
                         <div class="filter-row">
                             <div class="filter-group">
                                 <label for="lib-filter-title">Title</label>
                                 <input type="text" id="lib-filter-title" placeholder="Filter by title...">
-                            </div>
-                            <div class="filter-group">
-                                <label for="lib-filter-artist">Artist</label>
-                                <select id="lib-filter-artist">
-                                    <option value="">All Artists</option>
-                                </select>
                             </div>
                             <div class="filter-group">
                                 <label for="lib-filter-min-dur">Min Duration (s)</label>
@@ -165,7 +179,6 @@
                             <button id="btn-lib-filter" class="btn btn-primary">Filter</button>
                             <button id="btn-lib-reset" class="btn btn-ghost">Reset</button>
                             <button id="btn-lib-add-selected" class="btn btn-secondary" disabled>Add Selected (0)</button>
-                            <button id="btn-lib-add-all-filtered" class="btn btn-primary">Add All Filtered</button>
                         </div>
                     </div>
                     <div class="table-wrapper">
@@ -189,35 +202,6 @@
                         <span id="lib-page-info">Page 1 / 1</span>
                         <button id="lib-page-next" class="btn btn-ghost" disabled>Next</button>
                     </div>
-                </section>
-
-                <section id="playlist-section" class="card">
-                    <div class="card-header">
-                        <h2>Your Playlist <span id="playlist-count-badge" class="badge">0 songs</span></h2>
-                    </div>
-                    <div class="table-wrapper">
-                        <table id="playlist-table" class="tracklist-table">
-                            <thead>
-                                <tr>
-                                    <th class="track-col-num">#</th>
-                                    <th class="track-col-title">Title</th>
-                                    <th class="track-col-artist">Artist</th>
-                                    <th class="track-col-duration">
-                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                    </th>
-                                    <th class="track-col-action"></th>
-                                </tr>
-                            </thead>
-                            <tbody id="playlist-body"></tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <section id="recently-played" class="card">
-                    <div class="card-header">
-                        <h2>Recently Played</h2>
-                    </div>
-                    <ul id="history-stack"></ul>
                 </section>
 
                 <section id="visualization-section" class="card">
@@ -299,14 +283,6 @@
             </div>
         </div>
         <div class="np-bar-right">
-            <button class="np-control-btn" title="Lyrics">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
-                    <path d="M19 10v2a7 7 0 01-14 0v-2"/>
-                    <line x1="12" y1="19" x2="12" y2="23"/>
-                    <line x1="8" y1="23" x2="16" y2="23"/>
-                </svg>
-            </button>
             <button class="np-control-btn" id="np-queue" title="Queue">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
@@ -332,8 +308,6 @@
 
     <div class="context-menu" id="context-menu">
         <div class="context-menu-item" data-action="add-to-playlist">Add to Playlist</div>
-        <div class="context-menu-item" data-action="share">Share</div>
-        <div class="context-menu-item" data-action="go-to-artist">Go to Artist</div>
         <div class="context-menu-separator"></div>
         <div class="context-menu-item context-menu-danger" data-action="delete">Delete</div>
     </div>
@@ -381,7 +355,9 @@
             const item = e.target.closest('.context-menu-item');
             if (!item) return;
             const songId = document.getElementById('context-menu').dataset.songId;
-            if (item.dataset.action === 'delete' && songId && typeof onDelete === 'function') {
+            if (item.dataset.action === 'add-to-playlist' && songId && typeof onAddToPlaylist === 'function') {
+                onAddToPlaylist(songId);
+            } else if (item.dataset.action === 'delete' && songId && typeof onDelete === 'function') {
                 onDelete(songId);
             }
             document.getElementById('context-menu').classList.remove('context-menu-visible');
