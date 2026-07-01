@@ -2,3 +2,7 @@
 out/
 .idea/
 .vscode/
+
+# macOS system files
+._*
+.DS_Store
