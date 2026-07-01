@@ -7,6 +7,9 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -170,33 +173,54 @@ public class SongDataGenerator {
     public static List<Song> importFromCSV(String filePath) {
         List<Song> songs = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-            reader.readLine(); // skip header
-            String line;
-            while ((line = reader.readLine()) != null) {
-                int firstComma = line.indexOf(',');
-                int lastComma = line.lastIndexOf(',');
-                if (firstComma == -1 || lastComma == -1 || firstComma == lastComma) {
-                    continue;
-                }
-                
-                String id = line.substring(0, firstComma);
-                int duration = Integer.parseInt(line.substring(lastComma + 1).trim());
-                
-                String middle = line.substring(firstComma + 1, lastComma);
-                String[] middleParts = middle.split("\",\"");
-                if (middleParts.length >= 2) {
-                    String title = middleParts[0].startsWith("\"") ? middleParts[0].substring(1) : middleParts[0];
-                    String artist = middleParts[1].endsWith("\"") ? middleParts[1].substring(0, middleParts[1].length() - 1) : middleParts[1];
-                    
-                    title = title.replace("\"\"", "\"");
-                    artist = artist.replace("\"\"", "\"");
-                    
-                    Song song = new Song(id, title, artist, duration);
-                    songs.add(song);
-                }
-            }
+            return parseSongsFromReader(reader);
         } catch (IOException | NumberFormatException e) {
             System.err.println("Error importing songs from CSV: " + e.getMessage());
+        }
+        return songs;
+    }
+
+    /**
+     * Imports a list of songs from a CSV input stream on the classpath.
+     * @param inputStream CSV input stream (caller may close after return).
+     * @return List of parsed Song objects.
+     */
+    public static List<Song> importFromCSV(InputStream inputStream) {
+        List<Song> songs = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            return parseSongsFromReader(reader);
+        } catch (IOException | NumberFormatException e) {
+            System.err.println("Error importing songs from CSV: " + e.getMessage());
+        }
+        return songs;
+    }
+
+    private static List<Song> parseSongsFromReader(BufferedReader reader) throws IOException {
+        List<Song> songs = new ArrayList<>();
+        reader.readLine(); // skip header
+        String line;
+        while ((line = reader.readLine()) != null) {
+            int firstComma = line.indexOf(',');
+            int lastComma = line.lastIndexOf(',');
+            if (firstComma == -1 || lastComma == -1 || firstComma == lastComma) {
+                continue;
+            }
+
+            String id = line.substring(0, firstComma);
+            int duration = Integer.parseInt(line.substring(lastComma + 1).trim());
+
+            String middle = line.substring(firstComma + 1, lastComma);
+            String[] middleParts = middle.split("\",\"");
+            if (middleParts.length >= 2) {
+                String title = middleParts[0].startsWith("\"") ? middleParts[0].substring(1) : middleParts[0];
+                String artist = middleParts[1].endsWith("\"") ? middleParts[1].substring(0, middleParts[1].length() - 1) : middleParts[1];
+
+                title = title.replace("\"\"", "\"");
+                artist = artist.replace("\"\"", "\"");
+
+                Song song = new Song(id, title, artist, duration);
+                songs.add(song);
+            }
         }
         return songs;
     }

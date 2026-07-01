@@ -30,7 +30,7 @@ public class MainServer {
 
     public static void main(String[] args) throws IOException {
         System.out.println("Loading CSV song library...");
-        csvLibrary = SongDataGenerator.importFromCSV("songs_10k.csv");
+        csvLibrary = loadCsvLibrary();
         System.out.println("CSV library loaded: " + csvLibrary.size() + " songs available.");
         System.out.println("Playlist is empty. Users can add songs from the library.");
 
@@ -351,27 +351,46 @@ public class MainServer {
             if (path.equals("/")) {
                 path = "/index.html";
             }
-            java.io.File file = new java.io.File("frontend" + path);
-            if (file.exists() && !file.isDirectory()) {
-                byte[] bytes = java.nio.file.Files.readAllBytes(file.toPath());
-                String contentType = "text/plain";
-                if (path.endsWith(".html")) contentType = "text/html";
-                else if (path.endsWith(".css")) contentType = "text/css";
-                else if (path.endsWith(".js")) contentType = "application/javascript";
-                
+            if (path.contains("..")) {
+                exchange.sendResponseHeaders(403, -1);
+                return;
+            }
+            String resourcePath = "/frontend" + path;
+            try (InputStream is = MainServer.class.getResourceAsStream(resourcePath)) {
+                if (is == null) {
+                    exchange.sendResponseHeaders(404, -1);
+                    return;
+                }
+                byte[] bytes = is.readAllBytes();
+                String contentType = contentTypeForPath(path);
+
                 exchange.getResponseHeaders().add("Content-Type", contentType);
                 exchange.sendResponseHeaders(200, bytes.length);
                 try (OutputStream os = exchange.getResponseBody()) {
                     os.write(bytes);
                 }
-            } else {
-                exchange.sendResponseHeaders(404, -1);
             }
         });
 
         server.setExecutor(null);
         server.start();
         System.out.println("Server started on http://localhost:8085");
+    }
+
+    private static List<Song> loadCsvLibrary() throws IOException {
+        try (InputStream is = MainServer.class.getResourceAsStream("/songs_10k.csv")) {
+            if (is != null) {
+                return SongDataGenerator.importFromCSV(is);
+            }
+        }
+        return SongDataGenerator.importFromCSV("songs_10k.csv");
+    }
+
+    private static String contentTypeForPath(String path) {
+        if (path.endsWith(".html")) return "text/html; charset=UTF-8";
+        if (path.endsWith(".css")) return "text/css; charset=UTF-8";
+        if (path.endsWith(".js")) return "application/javascript; charset=UTF-8";
+        return "text/plain; charset=UTF-8";
     }
 
     private static void cors(HttpExchange exchange) {
