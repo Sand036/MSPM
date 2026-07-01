@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadCurrentSong();
     loadHistory();
     loadLibrary();
+    loadContentRails();
     setupEventListeners();
 });
 
@@ -27,6 +28,38 @@ function setupEventListeners() {
     });
     document.getElementById('add-song-form').addEventListener('submit', onAddSong);
     document.getElementById('btn-sort').addEventListener('click', onSort);
+
+    // NP Bar controls
+    document.getElementById('np-play').addEventListener('click', onPlayPause);
+    document.getElementById('np-next').addEventListener('click', onNext);
+    document.getElementById('np-prev').addEventListener('click', onPrevious);
+    document.getElementById('np-shuffle').addEventListener('click', onShuffle);
+    document.getElementById('np-repeat').addEventListener('click', function() {
+        const modes = ['OFF', 'ONE', 'ALL'];
+        const current = document.getElementById('repeat-mode').value;
+        const next = modes[(modes.indexOf(current) + 1) % modes.length];
+        document.getElementById('repeat-mode').value = next;
+        onRepeatChange();
+    });
+
+    // NP Volume bar
+    const volBar = document.getElementById('np-volume-bar');
+    volBar.addEventListener('click', e => {
+        const rect = volBar.getBoundingClientRect();
+        const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        document.getElementById('np-volume-fill').style.width = (pct * 100) + '%';
+    });
+
+    // NP Progress bar
+    const progBar = document.getElementById('np-progress-bar');
+    progBar.addEventListener('click', e => {
+        if (!currentSong || !currentSong.duration) return;
+        const rect = progBar.getBoundingClientRect();
+        const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        document.getElementById('np-progress-fill').style.width = (pct * 100) + '%';
+        const seekTime = Math.floor(pct * currentSong.duration);
+        document.getElementById('np-time-current').textContent = formatDuration(seekTime);
+    });
 
     // Library event listeners
     document.getElementById('btn-lib-filter').addEventListener('click', () => {
@@ -88,25 +121,86 @@ function renderPlaylist(songs) {
         return;
     }
 
-    tbody.innerHTML = songs.map(song => {
-        const active = currentSong && song.id === currentSong.id ? 'class="active-song"' : '';
-        return `<tr ${active}>
-            <td>${song.id}</td>
-            <td>${escapeHtml(song.title)}</td>
-            <td>${escapeHtml(song.artist)}</td>
-            <td>${formatDuration(song.duration)}</td>
-            <td><button class="btn btn-danger" data-id="${song.id}">Delete</button></td>
+    tbody.innerHTML = songs.map((song, i) => {
+        const isActive = currentSong && song.id === currentSong.id;
+        return `<tr class="tracklist-row${isActive ? ' active-song' : ''}" data-song-id="${song.id}">
+            <td class="track-col-num">
+                <span class="track-num">${i + 1}</span>
+                <span class="track-play-icon">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7L8 5z"/></svg>
+                </span>
+            </td>
+            <td class="track-col-title">
+                <span class="track-title${isActive ? ' track-title-active' : ''}">${escapeHtml(song.title)}</span>
+            </td>
+            <td class="track-col-artist"><span class="track-artist">${escapeHtml(song.artist)}</span></td>
+            <td class="track-col-duration"><span class="track-duration">${formatDuration(song.duration)}</span></td>
+            <td class="track-col-action">
+                <button class="track-more" data-id="${song.id}" title="More">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                </button>
+            </td>
         </tr>`;
     }).join('');
 
     tbody.querySelectorAll('.btn-danger').forEach(btn => {
         btn.addEventListener('click', () => onDelete(btn.dataset.id));
     });
+
+    tbody.querySelectorAll('.track-more').forEach(btn => {
+        btn.addEventListener('click', e => {
+            e.stopPropagation();
+            const rect = btn.getBoundingClientRect();
+            showContextMenu(rect.right - 180, rect.bottom + 4, btn.dataset.id);
+        });
+    });
+
+    tbody.querySelectorAll('.tracklist-row').forEach(row => {
+        row.addEventListener('dblclick', () => {
+            const id = row.dataset.songId;
+            const song = currentPlaylist.find(s => String(s.id) === id);
+            if (song && currentSong && String(currentSong.id) === id) {
+                onPlayPause();
+            } else {
+                onPlaySongById(id);
+            }
+        });
+    });
+}
+
+function updateNowPlayingBar(song) {
+    const titleEl = document.getElementById('np-title');
+    const artistEl = document.getElementById('np-artist');
+    const playBtn = document.getElementById('np-play');
+
+    if (!song) {
+        titleEl.textContent = 'No song playing';
+        artistEl.textContent = '';
+        playBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="#000"><path d="M8 5v14l11-7L8 5z"/></svg>';
+        playBtn.title = 'Play';
+        document.getElementById('np-time-current').textContent = '0:00';
+        document.getElementById('np-time-total').textContent = '0:00';
+        document.getElementById('np-progress-fill').style.width = '0%';
+        return;
+    }
+
+    titleEl.textContent = song.title;
+    artistEl.textContent = song.artist;
+    document.getElementById('np-time-total').textContent = formatDuration(song.duration);
+
+    if (isPlaying) {
+        playBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="#000"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+        playBtn.title = 'Pause';
+    } else {
+        playBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="#000"><path d="M8 5v14l11-7L8 5z"/></svg>';
+        playBtn.title = 'Play';
+    }
 }
 
 function renderCurrentSong(song) {
     const info = document.getElementById('current-song-info');
     currentSong = song;
+    updateNowPlayingBar(song);
 
     if (!song) {
         info.innerHTML = '<p class="no-song">No song playing</p>';
@@ -202,6 +296,7 @@ function updatePlayButton() {
         ? '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
         : '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5v14l11-7L8 5z"/></svg>';
     btn.title = isPlaying ? 'Pause' : 'Play';
+    updateNowPlayingBar(currentSong);
 }
 
 async function onNext() {
@@ -238,6 +333,9 @@ async function onPrevious() {
 
 async function onShuffle() {
     const shuffleEl = document.getElementById('shuffle-animation');
+    const npShuffle = document.getElementById('np-shuffle');
+    npShuffle.classList.toggle('active');
+    npShuffle.style.color = npShuffle.classList.contains('active') ? '#1ed760' : '';
     showShuffleAnimation(async () => {
         try {
             const songs = await shufflePlaylist();
@@ -257,6 +355,9 @@ async function onShuffle() {
 
 async function onRepeatChange() {
     const mode = document.getElementById('repeat-mode').value;
+    const npRepeat = document.getElementById('np-repeat');
+    npRepeat.classList.toggle('active', mode !== 'OFF');
+    npRepeat.style.color = mode !== 'OFF' ? '#1ed760' : '';
     try {
         await setRepeatMode(mode);
     } catch (err) {
@@ -340,10 +441,10 @@ async function onSort() {
 }
 
 function highlightActiveSong(song) {
-    const rows = document.querySelectorAll('#playlist-body tr');
+    const rows = document.querySelectorAll('#playlist-body .tracklist-row');
     rows.forEach(row => {
         row.classList.remove('active-song');
-        if (song && row.cells[0] && row.cells[0].textContent === String(song.id)) {
+        if (song && row.dataset.songId === String(song.id)) {
             row.classList.add('active-song');
         }
     });
@@ -534,6 +635,84 @@ async function onLibAddAllFiltered() {
 
     btn.disabled = false;
     btn.textContent = '📥 Add All Filtered';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONTENT RAILS
+// ═══════════════════════════════════════════════════════════════
+
+async function loadContentRails() {
+    try {
+        const data = await getCsvSongs({ page: 1, pageSize: 100 });
+        if (!data || !data.songs || data.songs.length === 0) return;
+
+        const featuredEl = document.getElementById('rail-featured-content');
+        const featured = data.songs.slice(0, 10);
+        featuredEl.innerHTML = featured.map(song => `
+            <div class="rail-card" data-song-id="${song.id}">
+                <div class="rail-card-img">
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#767676" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="#767676"/>
+                    </svg>
+                </div>
+                <div class="rail-card-title">${escapeHtml(song.title)}</div>
+                <div class="rail-card-sub">${escapeHtml(song.artist)}</div>
+            </div>
+        `).join('');
+
+        const artistMap = {};
+        data.songs.forEach(song => {
+            if (!artistMap[song.artist]) artistMap[song.artist] = [];
+            if (artistMap[song.artist].length < 6) artistMap[song.artist].push(song);
+        });
+        const topArtists = Object.keys(artistMap).slice(0, 5);
+        const artistEl = document.getElementById('rail-artists-content');
+        artistEl.innerHTML = topArtists.flatMap(artist => artistMap[artist]).map(song => `
+            <div class="rail-card" data-song-id="${song.id}">
+                <div class="rail-card-img">
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#767676" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="#767676"/>
+                    </svg>
+                </div>
+                <div class="rail-card-title">${escapeHtml(song.title)}</div>
+                <div class="rail-card-sub">${escapeHtml(song.artist)}</div>
+            </div>
+        `).join('');
+
+        document.querySelectorAll('.rail-card').forEach(card => {
+            card.addEventListener('dblclick', () => onPlaySongById(card.dataset.songId));
+            card.addEventListener('contextmenu', e => {
+                e.preventDefault();
+                showContextMenu(e.clientX, e.clientY, card.dataset.songId);
+            });
+        });
+    } catch (err) {
+        console.error('Failed to load content rails:', err);
+    }
+}
+
+async function onPlaySongById(id) {
+    const song = currentPlaylist.find(s => String(s.id) === String(id));
+    if (!song) return;
+    if (currentSong && String(currentSong.id) === String(id)) {
+        onPlayPause();
+        return;
+    }
+    try {
+        await addSong(song);
+        await loadPlaylist();
+        const newSong = await playSong();
+        if (newSong) {
+            isPlaying = true;
+            renderCurrentSong(newSong);
+            highlightActiveSong(newSong);
+            renderCircularList(currentPlaylist, newSong.id);
+            updatePlayButton();
+            loadHistory();
+        }
+    } catch (err) {
+        console.error('Play song by ID failed:', err);
+    }
 }
 
 // ─── Toast notification ──────────────────────────────────────
