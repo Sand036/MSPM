@@ -431,6 +431,10 @@ body {
     cursor: not-allowed;
 }
 
+.btn-control.active {
+    color: var(--accent);
+}
+
 /* ─── Current Song ────────────────────────── */
 
 .current-song-display {
@@ -1252,10 +1256,11 @@ body {
     cursor: pointer;
     padding: 6px;
     border-radius: 50%;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     transition: all 0.15s ease;
+    position: relative;
 }
 
 .np-control-btn:hover {

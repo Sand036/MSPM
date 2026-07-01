@@ -3,6 +3,9 @@ let currentPlaylist = [];
 let isPlaying = false;
 let timerSeconds = 0;
 let timerInterval = null;
+let isShuffled = false;
+let playlistOriginalOrder = [];
+let clientHistory = [];
 
 // ─── Library state ───────────────────────────────────────────
 let libCurrentPage = 1;
@@ -64,7 +67,7 @@ function setupEventListeners() {
         const id = item.dataset.songId;
         if (id) {
             queuePopup.classList.remove('queue-popup-visible');
-            onPlaySongById(id);
+            playSongById(id);
         }
     });
 
@@ -149,6 +152,8 @@ function setupEventListeners() {
 async function loadPlaylist() {
     try {
         currentPlaylist = await getPlaylist();
+        playlistOriginalOrder = [...currentPlaylist];
+        isShuffled = false;
         renderPlaylist(currentPlaylist);
         renderCircularList(currentPlaylist, currentSong ? currentSong.id : null);
         // Update playlist count badge
@@ -161,11 +166,20 @@ async function loadPlaylist() {
 
 async function loadHistory() {
     try {
-        const history = await getHistory();
-        renderHistoryStack(history);
+        const history = await getHistory() || [];
+        clientHistory = history.reverse();
+        renderHistoryStack(clientHistory);
     } catch (err) {
         console.error('Failed to load history:', err);
     }
+}
+
+function pushHistory(song) {
+    if (!song) return;
+    clientHistory = clientHistory.filter(s => String(s.id) !== String(song.id));
+    clientHistory.unshift(song);
+    if (clientHistory.length > 100) clientHistory.length = 100;
+    renderHistoryStack(clientHistory);
 }
 
 function renderPlaylist(songs) {
@@ -217,7 +231,7 @@ function renderPlaylist(songs) {
             if (song && currentSong && String(currentSong.id) === id) {
                 onPlayPause();
             } else {
-                onPlaySongById(id);
+                playSongById(id);
             }
         });
     });
@@ -279,6 +293,7 @@ function renderCurrentSong(song) {
         document.getElementById('card-time-total').textContent = '0:00';
         stopTimer();
         updateTimerDisplay();
+        highlightActiveSong(null);
         return;
     }
 
@@ -375,6 +390,7 @@ async function loadCurrentSong() {
             if (isPlaying) startTimer();
             highlightActiveSong(song);
             renderCircularList(currentPlaylist, song.id);
+            pushHistory(song);
         } else if (currentPlaylist.length > 0) {
             const song = await playSong();
             if (song) {
@@ -384,6 +400,7 @@ async function loadCurrentSong() {
                 startTimer();
                 highlightActiveSong(song);
                 renderCircularList(currentPlaylist, song.id);
+                pushHistory(song);
             }
         }
         updatePlayButton();
@@ -411,6 +428,7 @@ async function onPlayPause() {
                 highlightActiveSong(song);
                 renderCircularList(currentPlaylist, song.id);
                 updatePlayButton();
+                pushHistory(song);
             }
             return;
         } catch (err) {
@@ -434,72 +452,108 @@ function updatePlayButton() {
 }
 
 async function onNext() {
-    try {
-        const song = await playNext();
-        if (song) {
-            isPlaying = true;
-            resetTimer();
-            renderCurrentSong(song);
-            startTimer();
-            highlightActiveSong(song);
-            renderCircularList(currentPlaylist, song.id);
-            updatePlayButton();
-        } else {
-            renderCurrentSong(null);
-        }
-        loadHistory();
-    } catch (err) {
-        console.error('Next failed:', err);
+    if (!currentSong || currentPlaylist.length === 0) {
+        renderCurrentSong(null);
+        return;
     }
+    const idx = currentPlaylist.findIndex(s => String(s.id) === String(currentSong.id));
+    if (idx < 0) { renderCurrentSong(null); return; }
+
+    const isLast = idx + 1 >= currentPlaylist.length;
+    if (isLast) {
+        const mode = document.getElementById('repeat-mode').value;
+        if (mode !== 'ALL') {
+            renderCurrentSong(null);
+            return;
+        }
+    }
+    const nextIdx = isLast ? 0 : idx + 1;
+    const nextSong = currentPlaylist[nextIdx];
+    if (!nextSong) { renderCurrentSong(null); return; }
+
+    await playSongById(nextSong.id);
 }
 
 async function onPrevious() {
-    try {
-        const song = await playPrevious();
-        if (song) {
-            isPlaying = true;
-            resetTimer();
-            renderCurrentSong(song);
-            startTimer();
-            highlightActiveSong(song);
-            renderCircularList(currentPlaylist, song.id);
-            updatePlayButton();
-        } else {
-            renderCurrentSong(null);
-        }
-        loadHistory();
-    } catch (err) {
-        console.error('Previous failed:', err);
+    if (!currentSong || currentPlaylist.length === 0) {
+        renderCurrentSong(null);
+        return;
     }
+    const idx = currentPlaylist.findIndex(s => String(s.id) === String(currentSong.id));
+    if (idx <= 0) { renderCurrentSong(null); return; }
+
+    const prevSong = currentPlaylist[idx - 1];
+    if (!prevSong) { renderCurrentSong(null); return; }
+
+    await playSongById(prevSong.id);
 }
 
 async function onShuffle() {
-    const shuffleEl = document.getElementById('shuffle-animation');
+    isShuffled = !isShuffled;
+
     const npShuffle = document.getElementById('np-shuffle');
-    npShuffle.classList.toggle('active');
-    npShuffle.style.color = npShuffle.classList.contains('active') ? '#1ed760' : '';
-    showShuffleAnimation(async () => {
-        try {
-            const songs = await shufflePlaylist();
-            currentPlaylist = songs;
-            renderPlaylist(currentPlaylist);
-            if (currentSong) {
-                highlightActiveSong(currentSong);
-                renderCircularList(currentPlaylist, currentSong.id);
-            } else {
-                renderCircularList(currentPlaylist, null);
+    const btnShuffle = document.getElementById('btn-shuffle');
+    npShuffle.classList.toggle('active', isShuffled);
+    npShuffle.style.color = isShuffled ? '#1ed760' : '';
+    btnShuffle.classList.toggle('active', isShuffled);
+
+    if (isShuffled) {
+        showShuffleAnimation(async () => {
+            try {
+                const songs = await shufflePlaylist();
+                currentPlaylist = songs;
+                renderPlaylist(currentPlaylist);
+                if (currentSong) {
+                    highlightActiveSong(currentSong);
+                    renderCircularList(currentPlaylist, currentSong.id);
+                } else {
+                    renderCircularList(currentPlaylist, null);
+                }
+            } catch (err) {
+                console.error('Shuffle failed:', err);
+                const shuffled = [...currentPlaylist];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                currentPlaylist = shuffled;
+                renderPlaylist(currentPlaylist);
+                if (currentSong) {
+                    highlightActiveSong(currentSong);
+                    renderCircularList(currentPlaylist, currentSong.id);
+                } else {
+                    renderCircularList(currentPlaylist, null);
+                }
             }
-        } catch (err) {
-            console.error('Shuffle failed:', err);
+        });
+    } else {
+        currentPlaylist = [...playlistOriginalOrder];
+        renderPlaylist(currentPlaylist);
+        if (currentSong) {
+            highlightActiveSong(currentSong);
+            renderCircularList(currentPlaylist, currentSong.id);
+        } else {
+            renderCircularList(currentPlaylist, null);
         }
-    });
+    }
 }
 
 async function onRepeatChange() {
     const mode = document.getElementById('repeat-mode').value;
     const npRepeat = document.getElementById('np-repeat');
-    npRepeat.classList.toggle('active', mode !== 'OFF');
-    npRepeat.style.color = mode !== 'OFF' ? '#1ed760' : '';
+    const isActive = mode !== 'OFF';
+    npRepeat.classList.toggle('active', isActive);
+    npRepeat.style.color = isActive ? '#1ed760' : '';
+
+    const svgAll = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>';
+    if (mode === 'ONE') {
+        npRepeat.innerHTML = svgAll + '<span style="position:absolute;top:-1px;right:-2px;font-size:9px;font-weight:700;background:var(--canvas);border-radius:50%;width:12px;height:12px;display:flex;align-items:center;justify-content:center;">1</span>';
+        npRepeat.title = 'Repeat One';
+    } else {
+        npRepeat.innerHTML = svgAll;
+        npRepeat.title = mode === 'ALL' ? 'Repeat All' : 'Repeat';
+    }
+
     try {
         await setRepeatMode(mode);
     } catch (err) {
@@ -770,7 +824,7 @@ async function loadContentRails() {
         document.querySelectorAll('.rail-play-btn').forEach(btn => {
             btn.addEventListener('click', e => {
                 e.stopPropagation();
-                onPlaySongById(btn.dataset.id);
+                playSongById(btn.dataset.id);
             });
         });
         document.querySelectorAll('.rail-card').forEach(card => {
@@ -784,7 +838,7 @@ async function loadContentRails() {
     }
 }
 
-async function onPlaySongById(id) {
+async function playSongById(id) {
     let song = currentPlaylist.find(s => String(s.id) === String(id));
     if (!song) {
         try {
@@ -793,7 +847,7 @@ async function onPlaySongById(id) {
                 song = data.songs.find(s => String(s.id) === String(id));
             }
         } catch (err) {
-            console.error('Failed to find song in library:', err);
+            console.error('Failed to find song:', err);
             return;
         }
     }
@@ -803,42 +857,23 @@ async function onPlaySongById(id) {
         return;
     }
     try {
-        const inPlaylist = currentPlaylist.some(s => String(s.id) === String(id));
-        if (!inPlaylist) {
+        if (!currentPlaylist.some(s => String(s.id) === String(id))) {
             await addSong({ id: song.id, title: song.title, artist: song.artist, duration: song.duration });
             await loadPlaylist();
             await loadLibrary();
         }
-        loadHistory();
-        const idx = currentPlaylist.findIndex(s => String(s.id) === String(id));
-        if (idx < 0) return;
+        const targetSong = currentPlaylist.find(s => String(s.id) === String(id));
+        if (!targetSong) return;
 
-        if (idx === 0) {
-            const s = await playSong();
-            if (s) {
-                isPlaying = true;
-                resetTimer();
-                renderCurrentSong(s);
-                startTimer();
-                highlightActiveSong(s);
-                renderCircularList(currentPlaylist, s.id);
-                updatePlayButton();
-            }
-            return;
-        }
-        let current = await playSong();
-        for (let i = 0; i < idx && current; i++) {
-            current = await playNext();
-        }
-        if (current) {
-            isPlaying = true;
-            resetTimer();
-            renderCurrentSong(current);
-            startTimer();
-            highlightActiveSong(current);
-            renderCircularList(currentPlaylist, current.id);
-            updatePlayButton();
-        }
+        currentSong = targetSong;
+        isPlaying = true;
+        resetTimer();
+        renderCurrentSong(targetSong);
+        startTimer();
+        highlightActiveSong(targetSong);
+        renderCircularList(currentPlaylist, targetSong.id);
+        updatePlayButton();
+        pushHistory(targetSong);
     } catch (err) {
         console.error('Play song by ID failed:', err);
     }
