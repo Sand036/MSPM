@@ -146,6 +146,7 @@ body {
 }
 
 .search-bar {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -187,6 +188,97 @@ body {
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
+}
+
+.search-bar {
+    position: relative;
+}
+
+.search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 8px;
+    background: var(--control);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-menu);
+    padding: 8px;
+    max-height: 360px;
+    overflow-y: auto;
+    z-index: 999;
+    display: none;
+}
+
+.search-dropdown-visible {
+    display: block;
+}
+
+.search-dd-empty {
+    padding: 16px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.search-dd-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: background 0.1s ease;
+}
+
+.search-dd-item:hover {
+    background: var(--control-hover);
+}
+
+.search-dd-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.search-dd-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.search-dd-artist {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.search-dd-add {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-secondary);
+    padding: 6px 16px;
+    border-radius: var(--radius-pill);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font-family);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.search-dd-add:hover:not(:disabled) {
+    color: var(--text-primary);
+    border-color: var(--text-primary);
+}
+
+.search-dd-add:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* ─── Content ─────────────────────────────── */
@@ -1104,6 +1196,33 @@ body {
     align-items: center;
     justify-content: center;
     margin-bottom: 12px;
+    position: relative;
+}
+
+.rail-play-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.rail-card:hover .rail-play-btn {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.rail-play-btn:hover {
+    transform: translateY(0) scale(1.06);
+    filter: brightness(1.1);
 }
 
 .rail-card-title {

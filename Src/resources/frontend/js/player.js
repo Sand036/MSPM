@@ -22,12 +22,16 @@ function setupEventListeners() {
     document.getElementById('btn-prev').addEventListener('click', onPrevious);
     document.getElementById('btn-shuffle').addEventListener('click', onShuffle);
     document.getElementById('repeat-mode').addEventListener('change', onRepeatChange);
-    document.getElementById('btn-search').addEventListener('click', onSearch);
-    document.getElementById('search-input').addEventListener('keydown', e => {
-        if (e.key === 'Enter') onSearch();
+
+    // Search input: show dropdown on focus, filter on keyup
+    const searchInput = document.getElementById('search-input');
+    searchInput.addEventListener('focus', onSearchFocus);
+    searchInput.addEventListener('keyup', onSearchType);
+
+    document.addEventListener('click', e => {
+        const dd = document.getElementById('search-dropdown');
+        if (!e.target.closest('.search-bar')) dd.classList.remove('search-dropdown-visible');
     });
-    document.getElementById('add-song-form').addEventListener('submit', onAddSong);
-    document.getElementById('btn-sort').addEventListener('click', onSort);
 
     // NP Bar controls
     document.getElementById('np-play').addEventListener('click', onPlayPause);
@@ -142,10 +146,6 @@ function renderPlaylist(songs) {
             </td>
         </tr>`;
     }).join('');
-
-    tbody.querySelectorAll('.btn-danger').forEach(btn => {
-        btn.addEventListener('click', () => onDelete(btn.dataset.id));
-    });
 
     tbody.querySelectorAll('.track-more').forEach(btn => {
         btn.addEventListener('click', e => {
@@ -365,46 +365,71 @@ async function onRepeatChange() {
     }
 }
 
-async function onSearch() {
-    const title = document.getElementById('search-input').value.trim();
-    if (!title) return;
+let searchDebounceTimer = null;
 
-    try {
-        const results = await searchSong(title);
-        const container = document.getElementById('search-results');
-        if (!results || results.length === 0) {
-            container.innerHTML = '<p style="color:#888;">No results found</p>';
-            return;
-        }
-        container.innerHTML = results.map(song =>
-            `<div class="search-result-item">
-                <span class="title">${escapeHtml(song.title)}</span>
-                <span style="color:#888;">${escapeHtml(song.artist)} — ${formatDuration(song.duration)}</span>
-            </div>`
-        ).join('');
-    } catch (err) {
-        console.error('Search failed:', err);
+async function onSearchFocus() {
+    const dd = document.getElementById('search-dropdown');
+    const val = document.getElementById('search-input').value.trim();
+    if (val.length > 0) {
+        dd.classList.add('search-dropdown-visible');
     }
 }
 
-async function onAddSong(e) {
-    e.preventDefault();
-    const id = document.getElementById('song-id').value.trim();
-    const title = document.getElementById('song-title').value.trim();
-    const artist = document.getElementById('song-artist').value.trim();
-    const duration = parseInt(document.getElementById('song-duration').value);
+async function onSearchType() {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(async () => {
+        const val = document.getElementById('search-input').value.trim();
+        const dd = document.getElementById('search-dropdown');
+        if (val.length === 0) {
+            dd.classList.remove('search-dropdown-visible');
+            return;
+        }
+        try {
+            const data = await getCsvSongs({ title: val, page: 1, pageSize: 20 });
+            const results = data && data.songs ? data.songs : [];
+            if (results.length === 0) {
+                dd.innerHTML = '<div class="search-dd-empty">No songs found</div>';
+                dd.classList.add('search-dropdown-visible');
+                return;
+            }
+            dd.innerHTML = results.map(song => `
+                <div class="search-dd-item" data-song-id="${song.id}" data-song-title="${escapeHtml(song.title)}" data-song-artist="${escapeHtml(song.artist)}" data-song-duration="${song.duration}">
+                    <div class="search-dd-info">
+                        <div class="search-dd-title">${escapeHtml(song.title)}</div>
+                        <div class="search-dd-artist">${escapeHtml(song.artist)} — ${formatDuration(song.duration)}</div>
+                    </div>
+                    <button class="search-dd-add" data-id="${song.id}" data-title="${escapeHtml(song.title)}" data-artist="${escapeHtml(song.artist)}" data-duration="${song.duration}">Add</button>
+                </div>
+            `).join('');
+            dd.classList.add('search-dropdown-visible');
 
-    if (!title || !artist) return;
-
-    try {
-        await addSong({ id, title, artist, duration });
-        document.getElementById('add-song-form').reset();
-        await loadPlaylist();
-        // Refresh library to update "in playlist" status
-        loadLibrary();
-    } catch (err) {
-        console.error('Add song failed:', err);
-    }
+            dd.querySelectorAll('.search-dd-add').forEach(btn => {
+                btn.addEventListener('click', async e => {
+                    e.stopPropagation();
+                    btn.disabled = true;
+                    btn.textContent = '⏳';
+                    try {
+                        await addSong({
+                            id: btn.dataset.id,
+                            title: btn.dataset.title,
+                            artist: btn.dataset.artist,
+                            duration: parseInt(btn.dataset.duration)
+                        });
+                        await loadPlaylist();
+                        loadLibrary();
+                        showToast(`Added "${btn.dataset.title}" to playlist`);
+                        btn.textContent = '✓';
+                    } catch (err) {
+                        console.error('Add from search failed:', err);
+                        btn.textContent = 'Add';
+                        btn.disabled = false;
+                    }
+                });
+            });
+        } catch (err) {
+            console.error('Search failed:', err);
+        }
+    }, 250);
 }
 
 async function onDelete(id) {
@@ -461,7 +486,7 @@ function getLibFilters() {
         minDuration: document.getElementById('lib-filter-min-dur').value || undefined,
         maxDuration: document.getElementById('lib-filter-max-dur').value || undefined,
         page: libCurrentPage,
-        pageSize: 50,
+        pageSize: 10,
     };
 }
 
@@ -651,9 +676,9 @@ async function loadContentRails() {
         featuredEl.innerHTML = featured.map(song => `
             <div class="rail-card" data-song-id="${song.id}">
                 <div class="rail-card-img">
-                    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#767676" stroke-width="1.5">
-                        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="#767676"/>
-                    </svg>
+                    <button class="rail-play-btn" data-id="${song.id}">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="#000"><path d="M8 5v14l11-7L8 5z"/></svg>
+                    </button>
                 </div>
                 <div class="rail-card-title">${escapeHtml(song.title)}</div>
                 <div class="rail-card-sub">${escapeHtml(song.artist)}</div>
@@ -670,17 +695,22 @@ async function loadContentRails() {
         artistEl.innerHTML = topArtists.flatMap(artist => artistMap[artist]).map(song => `
             <div class="rail-card" data-song-id="${song.id}">
                 <div class="rail-card-img">
-                    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#767676" stroke-width="1.5">
-                        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="#767676"/>
-                    </svg>
+                    <button class="rail-play-btn" data-id="${song.id}">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="#000"><path d="M8 5v14l11-7L8 5z"/></svg>
+                    </button>
                 </div>
                 <div class="rail-card-title">${escapeHtml(song.title)}</div>
                 <div class="rail-card-sub">${escapeHtml(song.artist)}</div>
             </div>
         `).join('');
 
+        document.querySelectorAll('.rail-play-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                onPlaySongById(btn.dataset.id);
+            });
+        });
         document.querySelectorAll('.rail-card').forEach(card => {
-            card.addEventListener('dblclick', () => onPlaySongById(card.dataset.songId));
             card.addEventListener('contextmenu', e => {
                 e.preventDefault();
                 showContextMenu(e.clientX, e.clientY, card.dataset.songId);
@@ -692,23 +722,58 @@ async function loadContentRails() {
 }
 
 async function onPlaySongById(id) {
-    const song = currentPlaylist.find(s => String(s.id) === String(id));
+    let song = currentPlaylist.find(s => String(s.id) === String(id));
+    if (!song) {
+        try {
+            const data = await getCsvSongs({ page: 1, pageSize: 1000 });
+            if (data && data.songs) {
+                song = data.songs.find(s => String(s.id) === String(id));
+            }
+        } catch (err) {
+            console.error('Failed to find song in library:', err);
+            return;
+        }
+    }
     if (!song) return;
     if (currentSong && String(currentSong.id) === String(id)) {
         onPlayPause();
         return;
     }
     try {
-        await addSong(song);
-        await loadPlaylist();
-        const newSong = await playSong();
-        if (newSong) {
+        const inPlaylist = currentPlaylist.some(s => String(s.id) === String(id));
+        if (!inPlaylist) {
+            await addSong({ id: song.id, title: song.title, artist: song.artist, duration: song.duration });
+            await loadPlaylist();
+        }
+        loadHistory();
+        // Find song in updated playlist
+        const playSong = currentPlaylist.find(s => String(s.id) === String(id));
+        if (!playSong) return;
+
+        // We need to set this song as current. The backend /play starts from first song.
+        // Navigate to the correct song by playing next/prev until we reach it
+        const idx = currentPlaylist.findIndex(s => String(s.id) === String(id));
+        if (idx <= 0) {
+            const s = await playSong();
+            if (s) {
+                isPlaying = true;
+                renderCurrentSong(s);
+                highlightActiveSong(s);
+                renderCircularList(currentPlaylist, s.id);
+                updatePlayButton();
+            }
+            return;
+        }
+        let current = await playSong();
+        for (let i = 0; i < idx && current; i++) {
+            current = await playNext();
+        }
+        if (current) {
             isPlaying = true;
-            renderCurrentSong(newSong);
-            highlightActiveSong(newSong);
-            renderCircularList(currentPlaylist, newSong.id);
+            renderCurrentSong(current);
+            highlightActiveSong(current);
+            renderCircularList(currentPlaylist, current.id);
             updatePlayButton();
-            loadHistory();
         }
     } catch (err) {
         console.error('Play song by ID failed:', err);

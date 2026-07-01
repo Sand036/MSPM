@@ -64,10 +64,7 @@
                         <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                     </svg>
                     <input type="text" id="search-input" placeholder="What do you want to listen to?">
-                </div>
-                <div class="user-actions">
-                    <button class="btn btn-ghost">Sign Up</button>
-                    <button class="btn btn-secondary">Log In</button>
+                    <div class="search-dropdown" id="search-dropdown"></div>
                 </div>
             </header>
 
@@ -136,55 +133,7 @@
                     </div>
                 </section>
 
-                <section id="search-section" class="card">
-                    <div class="card-header">
-                        <h2>Search Results</h2>
-                        <button id="btn-search" class="btn btn-primary">Search</button>
-                    </div>
-                    <div id="search-results"></div>
-                </section>
 
-                <section id="add-song" class="card">
-                    <div class="card-header">
-                        <h2>Add Song</h2>
-                    </div>
-                    <form id="add-song-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="song-id">ID</label>
-                                <input type="text" id="song-id" required placeholder="e.g. S001">
-                            </div>
-                            <div class="form-group">
-                                <label for="song-title">Title</label>
-                                <input type="text" id="song-title" required placeholder="Song title">
-                            </div>
-                            <div class="form-group">
-                                <label for="song-artist">Artist</label>
-                                <input type="text" id="song-artist" required placeholder="Artist name">
-                            </div>
-                            <div class="form-group">
-                                <label for="song-duration">Duration (s)</label>
-                                <input type="number" id="song-duration" required placeholder="e.g. 240">
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Add Song</button>
-                    </form>
-                </section>
-
-                <section id="sort-section" class="card">
-                    <div class="card-header">
-                        <h2>Sort Playlist</h2>
-                    </div>
-                    <div class="sort-row">
-                        <select id="sort-type">
-                            <option value="id">By ID</option>
-                            <option value="title">By Title</option>
-                            <option value="artist">By Artist</option>
-                            <option value="playcount">By Play Count</option>
-                        </select>
-                        <button id="btn-sort" class="btn btn-primary">Sort</button>
-                    </div>
-                </section>
 
                 <section id="library-section" class="card">
                     <div class="card-header">
