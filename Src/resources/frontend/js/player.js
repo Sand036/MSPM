@@ -48,12 +48,55 @@ function setupEventListeners() {
         onRepeatChange();
     });
 
+    // NP Queue popup
+    const queueBtn = document.getElementById('np-queue');
+    const queuePopup = document.getElementById('np-queue-popup');
+    const queueList = document.getElementById('queue-popup-list');
+    queueBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        const isVisible = queuePopup.classList.contains('queue-popup-visible');
+        queuePopup.classList.toggle('queue-popup-visible');
+        if (!isVisible) renderQueuePopup();
+    });
+    queueList.addEventListener('click', e => {
+        const item = e.target.closest('.queue-popup-item');
+        if (!item) return;
+        const id = item.dataset.songId;
+        if (id) {
+            queuePopup.classList.remove('queue-popup-visible');
+            onPlaySongById(id);
+        }
+    });
+
+    function renderQueuePopup() {
+        if (!currentPlaylist || currentPlaylist.length === 0) {
+            queueList.innerHTML = '<div class="queue-popup-empty">Playlist is empty</div>';
+            return;
+        }
+        queueList.innerHTML = currentPlaylist.map((song, i) => {
+            const active = currentSong && String(song.id) === String(currentSong.id);
+            return `<div class="queue-popup-item${active ? ' queue-active' : ''}" data-song-id="${song.id}">
+                <span class="qpi-num">${i + 1}</span>
+                <span class="qpi-title">${escapeHtml(song.title)}</span>
+                <span class="qpi-dur">${formatDuration(song.duration)}</span>
+            </div>`;
+        }).join('');
+    }
+
+    document.addEventListener('click', e => {
+        if (!e.target.closest('#np-queue') && !e.target.closest('#np-queue-popup')) {
+            queuePopup.classList.remove('queue-popup-visible');
+        }
+    });
+
     // NP Volume bar
     const volBar = document.getElementById('np-volume-bar');
     volBar.addEventListener('click', e => {
         const rect = volBar.getBoundingClientRect();
         const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         document.getElementById('np-volume-fill').style.width = (pct * 100) + '%';
+        const thumb = document.getElementById('np-volume-thumb');
+        if (thumb) thumb.style.left = (pct * 100) + '%';
     });
 
     // NP Progress bar (bottom)
@@ -253,10 +296,6 @@ function renderCurrentSong(song) {
     `;
 
     document.getElementById('card-time-total').textContent = formatDuration(song.duration);
-    resetTimer();
-    if (isPlaying) {
-        startTimer();
-    }
 }
 
 
@@ -306,16 +345,22 @@ function resetTimer() {
 }
 
 function updateTimerDisplay() {
+    const npThumb = document.getElementById('np-progress-thumb');
+    const cardThumb = document.getElementById('card-progress-thumb');
     if (!currentSong || !currentSong.duration) {
         document.getElementById('np-progress-fill').style.width = '0%';
         document.getElementById('card-progress-fill').style.width = '0%';
         document.getElementById('np-time-current').textContent = '0:00';
         document.getElementById('card-time-current').textContent = '0:00';
+        if (npThumb) npThumb.style.left = '0%';
+        if (cardThumb) cardThumb.style.left = '0%';
         return;
     }
     const pct = Math.min(100, (timerSeconds / currentSong.duration) * 100);
     document.getElementById('np-progress-fill').style.width = pct + '%';
     document.getElementById('card-progress-fill').style.width = pct + '%';
+    if (npThumb) npThumb.style.left = pct + '%';
+    if (cardThumb) cardThumb.style.left = pct + '%';
     const timeStr = formatDuration(timerSeconds);
     document.getElementById('np-time-current').textContent = timeStr;
     document.getElementById('card-time-current').textContent = timeStr;
@@ -325,13 +370,18 @@ async function loadCurrentSong() {
     try {
         const song = await getCurrentSong();
         if (song) {
+            resetTimer();
             renderCurrentSong(song);
+            if (isPlaying) startTimer();
             highlightActiveSong(song);
             renderCircularList(currentPlaylist, song.id);
         } else if (currentPlaylist.length > 0) {
             const song = await playSong();
             if (song) {
+                isPlaying = true;
+                resetTimer();
                 renderCurrentSong(song);
+                startTimer();
                 highlightActiveSong(song);
                 renderCircularList(currentPlaylist, song.id);
             }
@@ -355,7 +405,9 @@ async function onPlayPause() {
             const song = await playSong();
             if (song) {
                 isPlaying = true;
+                resetTimer();
                 renderCurrentSong(song);
+                startTimer();
                 highlightActiveSong(song);
                 renderCircularList(currentPlaylist, song.id);
                 updatePlayButton();
@@ -386,7 +438,9 @@ async function onNext() {
         const song = await playNext();
         if (song) {
             isPlaying = true;
+            resetTimer();
             renderCurrentSong(song);
+            startTimer();
             highlightActiveSong(song);
             renderCircularList(currentPlaylist, song.id);
             updatePlayButton();
@@ -404,7 +458,9 @@ async function onPrevious() {
         const song = await playPrevious();
         if (song) {
             isPlaying = true;
+            resetTimer();
             renderCurrentSong(song);
+            startTimer();
             highlightActiveSong(song);
             renderCircularList(currentPlaylist, song.id);
             updatePlayButton();
@@ -751,6 +807,7 @@ async function onPlaySongById(id) {
         if (!inPlaylist) {
             await addSong({ id: song.id, title: song.title, artist: song.artist, duration: song.duration });
             await loadPlaylist();
+            await loadLibrary();
         }
         loadHistory();
         const idx = currentPlaylist.findIndex(s => String(s.id) === String(id));
@@ -760,7 +817,9 @@ async function onPlaySongById(id) {
             const s = await playSong();
             if (s) {
                 isPlaying = true;
+                resetTimer();
                 renderCurrentSong(s);
+                startTimer();
                 highlightActiveSong(s);
                 renderCircularList(currentPlaylist, s.id);
                 updatePlayButton();
@@ -773,7 +832,9 @@ async function onPlaySongById(id) {
         }
         if (current) {
             isPlaying = true;
+            resetTimer();
             renderCurrentSong(current);
+            startTimer();
             highlightActiveSong(current);
             renderCircularList(currentPlaylist, current.id);
             updatePlayButton();

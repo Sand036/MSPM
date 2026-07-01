@@ -238,11 +238,6 @@
                 <span class="np-title" id="np-title">No song playing</span>
                 <span class="np-artist" id="np-artist"></span>
             </div>
-            <button class="np-like" id="np-like" title="Add to Favorites">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
-                </svg>
-            </button>
         </div>
         <div class="np-bar-center">
             <div class="np-controls">
@@ -291,6 +286,10 @@
                     <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
                 </svg>
             </button>
+            <div class="np-queue-popup" id="np-queue-popup">
+                <div class="queue-popup-header">Up Next</div>
+                <div class="queue-popup-list" id="queue-popup-list"></div>
+            </div>
             <div class="np-volume">
                 <button class="np-control-btn np-volume-icon" id="np-volume-icon" title="Volume">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
