@@ -554,6 +554,7 @@ async function onRepeatChange() {
         npRepeat.title = mode === 'ALL' ? 'Repeat All' : 'Repeat';
     }
 
+    renderCircularList(currentPlaylist, currentSong ? currentSong.id : null);
     try {
         await setRepeatMode(mode);
     } catch (err) {

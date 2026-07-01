@@ -1,7 +1,23 @@
 function renderCircularList(songs, currentId) {
     const container = document.getElementById('circular-list');
+    const repeatMode = document.getElementById('repeat-mode').value;
     if (!songs || songs.length === 0) {
         container.innerHTML = '<span style="color:#666;">Playlist is empty</span>';
+        return;
+    }
+
+    if (repeatMode === 'ONE') {
+        if (!currentId) { container.innerHTML = ''; return; }
+        const song = songs.find(s => s.id === currentId);
+        if (!song) { container.innerHTML = ''; return; }
+        container.innerHTML = `
+            <div class="circular-node active-node">
+                <div class="node-title">${escapeHtml(song.title)}</div>
+                <div class="node-artist">${escapeHtml(song.artist)}</div>
+            </div>
+            <span class="circular-arrow">→</span>
+            <div class="circular-node circular-back-node">↻ back to first</div>
+        `;
         return;
     }
 
@@ -17,8 +33,9 @@ function renderCircularList(songs, currentId) {
         }
     });
 
-    if (songs.length > 1) {
-        html += `<span class="circular-back-arrow">↻ back to first</span>`;
+    if (repeatMode === 'ALL' && songs.length > 1) {
+        html += `<span class="circular-arrow">→</span>`;
+        html += `<div class="circular-node circular-back-node">↻ back to first</div>`;
     }
 
     container.innerHTML = html;

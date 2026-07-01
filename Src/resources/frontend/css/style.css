@@ -995,10 +995,13 @@ body {
     color: var(--text-muted);
 }
 
-.circular-back-arrow {
-    font-size: 14px;
+.circular-back-node {
+    border-color: var(--accent) !important;
     color: var(--accent);
-    margin-left: 8px;
+    background: rgba(30, 215, 96, 0.1) !important;
+    font-weight: 600;
+    min-width: auto;
+    white-space: nowrap;
 }
 
 #stack-display {
