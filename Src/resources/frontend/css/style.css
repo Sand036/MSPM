@@ -403,9 +403,14 @@ body {
     justify-content: center;
 }
 
-.btn-control:hover {
+.btn-control:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.15);
     transform: scale(1.06);
+}
+
+.btn-control:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
 }
 
 .btn-play {
@@ -415,10 +420,15 @@ body {
     height: 56px;
 }
 
-.btn-play:hover {
+.btn-play:hover:not(:disabled) {
     background: var(--accent);
     transform: scale(1.08);
     filter: brightness(1.1);
+}
+
+.btn-play:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
 }
 
 /* ─── Current Song ────────────────────────── */
@@ -495,6 +505,14 @@ body {
     50% { opacity: 0.6; }
 }
 
+.np-timer-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
 .controls-row {
     display: flex;
     justify-content: center;
@@ -543,6 +561,11 @@ body {
 .repeat-row select option {
     background: var(--canvas);
     color: var(--text-primary);
+}
+
+.repeat-row select:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 /* ─── Library Filters ─────────────────────── */
@@ -979,7 +1002,7 @@ body {
 
 #stack-display {
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     gap: 4px;
     padding: 16px;
     background: rgba(255, 255, 255, 0.02);

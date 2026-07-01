@@ -30,6 +30,14 @@
                     </svg>
                     <span>Home</span>
                 </a>
+                <a href="#" class="nav-item" data-target="playlist-section">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18V5l12-2v13"/>
+                        <circle cx="6" cy="18" r="3"/>
+                        <circle cx="18" cy="16" r="3"/>
+                    </svg>
+                    <span>Playlist</span>
+                </a>
                 <a href="#" class="nav-item" data-target="library-section">
                     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="7" rx="1"/>
@@ -38,14 +46,6 @@
                         <rect x="14" y="14" width="7" height="7" rx="1"/>
                     </svg>
                     <span>Library</span>
-                </a>
-                <a href="#" class="nav-item" data-target="playlist-section">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 18V5l12-2v13"/>
-                        <circle cx="6" cy="18" r="3"/>
-                        <circle cx="18" cy="16" r="3"/>
-                    </svg>
-                    <span>Playlist</span>
                 </a>
                 <a href="#" class="nav-item" data-target="visualization-section">
                     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
@@ -76,17 +76,9 @@
                     </div>
                     <div class="rail-content" id="rail-featured-content"></div>
                 </div>
-                <div class="content-rail" id="rail-artists">
-                    <div class="rail-header">
-                        <h2>Browse by Artist</h2>
-                        <a href="#" class="rail-show-all" data-target="library-section">Show all</a>
-                    </div>
-                    <div class="rail-content" id="rail-artists-content"></div>
-                </div>
-
                 <section id="current-song" class="card">
                     <div class="card-header">
-                        <h2>Now Playing</h2>
+                        <h2 id="now-playing-header">Waiting Play</h2>
                     </div>
                     <div class="current-song-display">
                         <div class="current-song-art" id="current-song-art">
@@ -102,6 +94,15 @@
                         <div id="current-song-info">
                             <p class="no-song">No song playing</p>
                         </div>
+                    </div>
+                    <div class="np-timer-wrap" id="np-card-timer">
+                        <span class="np-time" id="card-time-current">0:00</span>
+                        <div class="np-progress-wrap" id="card-progress-bar">
+                            <div class="np-progress-bg"></div>
+                            <div class="np-progress-fill" id="card-progress-fill" style="width:0%"></div>
+                            <div class="np-progress-thumb" id="card-progress-thumb"></div>
+                        </div>
+                        <span class="np-time" id="card-time-total">0:00</span>
                     </div>
                     <div class="controls-row">
                         <button id="btn-prev" class="btn btn-control" title="Previous">
@@ -307,8 +308,6 @@
     </div>
 
     <div class="context-menu" id="context-menu">
-        <div class="context-menu-item" data-action="add-to-playlist">Add to Playlist</div>
-        <div class="context-menu-separator"></div>
         <div class="context-menu-item context-menu-danger" data-action="delete">Delete</div>
     </div>
 
@@ -355,9 +354,7 @@
             const item = e.target.closest('.context-menu-item');
             if (!item) return;
             const songId = document.getElementById('context-menu').dataset.songId;
-            if (item.dataset.action === 'add-to-playlist' && songId && typeof onAddToPlaylist === 'function') {
-                onAddToPlaylist(songId);
-            } else if (item.dataset.action === 'delete' && songId && typeof onDelete === 'function') {
+            if (item.dataset.action === 'delete' && songId && typeof onDelete === 'function') {
                 onDelete(songId);
             }
             document.getElementById('context-menu').classList.remove('context-menu-visible');

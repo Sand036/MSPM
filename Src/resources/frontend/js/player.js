@@ -1,6 +1,8 @@
 let currentSong = null;
 let currentPlaylist = [];
 let isPlaying = false;
+let timerSeconds = 0;
+let timerInterval = null;
 
 // ─── Library state ───────────────────────────────────────────
 let libCurrentPage = 1;
@@ -54,16 +56,27 @@ function setupEventListeners() {
         document.getElementById('np-volume-fill').style.width = (pct * 100) + '%';
     });
 
-    // NP Progress bar
+    // NP Progress bar (bottom)
     const progBar = document.getElementById('np-progress-bar');
     progBar.addEventListener('click', e => {
         if (!currentSong || !currentSong.duration) return;
         const rect = progBar.getBoundingClientRect();
         const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-        document.getElementById('np-progress-fill').style.width = (pct * 100) + '%';
-        const seekTime = Math.floor(pct * currentSong.duration);
-        document.getElementById('np-time-current').textContent = formatDuration(seekTime);
+        timerSeconds = Math.floor(pct * currentSong.duration);
+        updateTimerDisplay();
     });
+
+    // Card Progress bar
+    const cardProgBar = document.getElementById('card-progress-bar');
+    if (cardProgBar) {
+        cardProgBar.addEventListener('click', e => {
+            if (!currentSong || !currentSong.duration) return;
+            const rect = cardProgBar.getBoundingClientRect();
+            const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            timerSeconds = Math.floor(pct * currentSong.duration);
+            updateTimerDisplay();
+        });
+    }
 
     // Library event listeners
     document.getElementById('btn-lib-filter').addEventListener('click', () => {
@@ -154,7 +167,8 @@ function renderPlaylist(songs) {
     });
 
     tbody.querySelectorAll('.tracklist-row').forEach(row => {
-        row.addEventListener('dblclick', () => {
+        row.addEventListener('click', e => {
+            if (e.target.closest('.track-more')) return;
             const id = row.dataset.songId;
             const song = currentPlaylist.find(s => String(s.id) === id);
             if (song && currentSong && String(currentSong.id) === id) {
@@ -179,12 +193,17 @@ function updateNowPlayingBar(song) {
         document.getElementById('np-time-current').textContent = '0:00';
         document.getElementById('np-time-total').textContent = '0:00';
         document.getElementById('np-progress-fill').style.width = '0%';
+        document.getElementById('card-time-current').textContent = '0:00';
+        document.getElementById('card-time-total').textContent = '0:00';
+        document.getElementById('card-progress-fill').style.width = '0%';
         return;
     }
 
     titleEl.textContent = song.title;
     artistEl.textContent = song.artist;
-    document.getElementById('np-time-total').textContent = formatDuration(song.duration);
+    const durationStr = formatDuration(song.duration);
+    document.getElementById('np-time-total').textContent = durationStr;
+    document.getElementById('card-time-total').textContent = durationStr;
 
     if (isPlaying) {
         playBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="#000"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
@@ -195,15 +214,32 @@ function updateNowPlayingBar(song) {
     }
 }
 
+function updateCardControls() {
+    const hasSong = currentSong !== null;
+    document.getElementById('btn-prev').disabled = !hasSong;
+    document.getElementById('btn-play').disabled = !hasSong;
+    document.getElementById('btn-shuffle').disabled = !hasSong;
+    document.getElementById('btn-next').disabled = !hasSong;
+    document.getElementById('repeat-mode').disabled = !hasSong;
+}
+
 function renderCurrentSong(song) {
     const info = document.getElementById('current-song-info');
+    const header = document.getElementById('now-playing-header');
     currentSong = song;
     updateNowPlayingBar(song);
+    updateCardControls();
 
     if (!song) {
         info.innerHTML = '<p class="no-song">No song playing</p>';
+        header.textContent = 'Waiting Play';
+        document.getElementById('card-time-total').textContent = '0:00';
+        stopTimer();
+        updateTimerDisplay();
         return;
     }
+
+    header.textContent = song.title;
 
     const statusIcon = isPlaying
         ? '<span class="playing-indicator">▶ Playing</span>'
@@ -211,11 +247,16 @@ function renderCurrentSong(song) {
 
     info.innerHTML = `
         ${statusIcon}
-        <span class="song-tag">ID <span>${song.id}</span></span>
-        <span class="song-tag">Title <span>${escapeHtml(song.title)}</span></span>
-        <span class="song-tag">Artist <span>${escapeHtml(song.artist)}</span></span>
-        <span class="song-tag">Duration <span>${formatDuration(song.duration)}</span></span>
+        <span class="song-tag">ID: <span>${song.id}</span></span>
+        <span class="song-tag">Artist: <span>${escapeHtml(song.artist)}</span></span>
+        <span class="song-tag">Duration: <span>${formatDuration(song.duration)}</span></span>
     `;
+
+    document.getElementById('card-time-total').textContent = formatDuration(song.duration);
+    resetTimer();
+    if (isPlaying) {
+        startTimer();
+    }
 }
 
 
@@ -230,6 +271,54 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// ─── Playback Timer ──────────────────────────────────────────
+
+function startTimer() {
+    stopTimer();
+    if (!currentSong || !currentSong.duration) return;
+    timerInterval = setInterval(() => {
+        timerSeconds++;
+        updateTimerDisplay();
+        if (currentSong && timerSeconds >= currentSong.duration) {
+            const mode = document.getElementById('repeat-mode').value;
+            if (mode === 'ONE') {
+                timerSeconds = 0;
+                updateTimerDisplay();
+            } else {
+                onNext();
+            }
+        }
+    }, 1000);
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
+function resetTimer() {
+    timerSeconds = 0;
+    updateTimerDisplay();
+}
+
+function updateTimerDisplay() {
+    if (!currentSong || !currentSong.duration) {
+        document.getElementById('np-progress-fill').style.width = '0%';
+        document.getElementById('card-progress-fill').style.width = '0%';
+        document.getElementById('np-time-current').textContent = '0:00';
+        document.getElementById('card-time-current').textContent = '0:00';
+        return;
+    }
+    const pct = Math.min(100, (timerSeconds / currentSong.duration) * 100);
+    document.getElementById('np-progress-fill').style.width = pct + '%';
+    document.getElementById('card-progress-fill').style.width = pct + '%';
+    const timeStr = formatDuration(timerSeconds);
+    document.getElementById('np-time-current').textContent = timeStr;
+    document.getElementById('card-time-current').textContent = timeStr;
 }
 
 async function loadCurrentSong() {
@@ -256,6 +345,7 @@ async function loadCurrentSong() {
 async function onPlayPause() {
     if (isPlaying) {
         isPlaying = false;
+        stopTimer();
         updatePlayButton();
         renderCurrentSong(currentSong);
         return;
@@ -263,15 +353,21 @@ async function onPlayPause() {
     if (!currentSong && currentPlaylist.length > 0) {
         try {
             const song = await playSong();
-            renderCurrentSong(song);
-            highlightActiveSong(song);
-            renderCircularList(currentPlaylist, song ? song.id : null);
+            if (song) {
+                isPlaying = true;
+                renderCurrentSong(song);
+                highlightActiveSong(song);
+                renderCircularList(currentPlaylist, song.id);
+                updatePlayButton();
+            }
+            return;
         } catch (err) {
             console.error('Play failed:', err);
             return;
         }
     }
     isPlaying = true;
+    startTimer();
     updatePlayButton();
     renderCurrentSong(currentSong);
 }
@@ -288,14 +384,16 @@ function updatePlayButton() {
 async function onNext() {
     try {
         const song = await playNext();
-        renderCurrentSong(song);
-        highlightActiveSong(song);
-        renderCircularList(currentPlaylist, song ? song.id : null);
-        loadHistory();
         if (song) {
             isPlaying = true;
+            renderCurrentSong(song);
+            highlightActiveSong(song);
+            renderCircularList(currentPlaylist, song.id);
             updatePlayButton();
+        } else {
+            renderCurrentSong(null);
         }
+        loadHistory();
     } catch (err) {
         console.error('Next failed:', err);
     }
@@ -304,14 +402,16 @@ async function onNext() {
 async function onPrevious() {
     try {
         const song = await playPrevious();
-        renderCurrentSong(song);
-        highlightActiveSong(song);
-        renderCircularList(currentPlaylist, song ? song.id : null);
-        loadHistory();
         if (song) {
             isPlaying = true;
+            renderCurrentSong(song);
+            highlightActiveSong(song);
+            renderCircularList(currentPlaylist, song.id);
             updatePlayButton();
+        } else {
+            renderCurrentSong(null);
         }
+        loadHistory();
     } catch (err) {
         console.error('Previous failed:', err);
     }
@@ -416,28 +516,6 @@ async function onSearchType() {
             console.error('Search failed:', err);
         }
     }, 250);
-}
-
-async function onAddToPlaylist(id) {
-    try {
-        const song = currentPlaylist.find(s => String(s.id) === String(id));
-        if (song) {
-            showToast('Song is already in your playlist');
-            return;
-        }
-        const data = await getCsvSongs({ page: 1, pageSize: 1000 });
-        if (data && data.songs) {
-            const found = data.songs.find(s => String(s.id) === String(id));
-            if (found) {
-                await addSong({ id: found.id, title: found.title, artist: found.artist, duration: found.duration });
-                await loadPlaylist();
-                loadLibrary();
-                showToast(`Added "${found.title}" to playlist`);
-            }
-        }
-    } catch (err) {
-        console.error('Add to playlist failed:', err);
-    }
 }
 
 async function onDelete(id) {
@@ -633,25 +711,6 @@ async function loadContentRails() {
             </div>
         `).join('');
 
-        const artistMap = {};
-        data.songs.forEach(song => {
-            if (!artistMap[song.artist]) artistMap[song.artist] = [];
-            if (artistMap[song.artist].length < 6) artistMap[song.artist].push(song);
-        });
-        const topArtists = Object.keys(artistMap).slice(0, 5);
-        const artistEl = document.getElementById('rail-artists-content');
-        artistEl.innerHTML = topArtists.flatMap(artist => artistMap[artist]).map(song => `
-            <div class="rail-card" data-song-id="${song.id}">
-                <div class="rail-card-img">
-                    <button class="rail-play-btn" data-id="${song.id}">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="#000"><path d="M8 5v14l11-7L8 5z"/></svg>
-                    </button>
-                </div>
-                <div class="rail-card-title">${escapeHtml(song.title)}</div>
-                <div class="rail-card-sub">${escapeHtml(song.artist)}</div>
-            </div>
-        `).join('');
-
         document.querySelectorAll('.rail-play-btn').forEach(btn => {
             btn.addEventListener('click', e => {
                 e.stopPropagation();
@@ -694,14 +753,10 @@ async function onPlaySongById(id) {
             await loadPlaylist();
         }
         loadHistory();
-        // Find song in updated playlist
-        const playSong = currentPlaylist.find(s => String(s.id) === String(id));
-        if (!playSong) return;
-
-        // We need to set this song as current. The backend /play starts from first song.
-        // Navigate to the correct song by playing next/prev until we reach it
         const idx = currentPlaylist.findIndex(s => String(s.id) === String(id));
-        if (idx <= 0) {
+        if (idx < 0) return;
+
+        if (idx === 0) {
             const s = await playSong();
             if (s) {
                 isPlaying = true;
