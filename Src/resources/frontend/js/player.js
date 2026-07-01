@@ -198,7 +198,9 @@ async function onPlayPause() {
 
 function updatePlayButton() {
     const btn = document.getElementById('btn-play');
-    btn.textContent = isPlaying ? '⏸' : '▶';
+    btn.innerHTML = isPlaying
+        ? '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+        : '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5v14l11-7L8 5z"/></svg>';
     btn.title = isPlaying ? 'Pause' : 'Play';
 }
 
@@ -422,12 +424,12 @@ function renderLibraryTable(songs) {
             <td>${escapeHtml(song.artist)}</td>
             <td>${formatDuration(song.duration)}</td>
             <td>${isInPlaylist ? '<span class="status-badge status-added">✓ In Playlist</span>' : '<span class="status-badge status-available">Available</span>'}</td>
-            <td>${isInPlaylist ? '<button class="btn btn-sm btn-disabled" disabled>Added</button>' : `<button class="btn btn-sm btn-add-one" data-id="${song.id}">➕ Add</button>`}</td>
+            <td>${isInPlaylist ? '<button class="btn btn-ghost" disabled style="opacity:0.4;padding:6px 16px;font-size:13px;">Added</button>' : `<button class="btn btn-ghost" data-id="${song.id}" style="padding:6px 16px;font-size:13px;">Add</button>`}</td>
         </tr>`;
     }).join('');
 
     // Individual add buttons
-    tbody.querySelectorAll('.btn-add-one').forEach(btn => {
+    tbody.querySelectorAll('.btn-ghost[data-id]').forEach(btn => {
         btn.addEventListener('click', async () => {
             const id = btn.dataset.id;
             btn.disabled = true;

@@ -3,185 +3,286 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Music Streaming Playlist Manager</title>
+    <title>MSPM - Music Streaming Playlist Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <header>
-        <h1>Music Streaming Playlist Manager</h1>
-    </header>
-
-    <main>
-        <section id="current-song" class="card">
-            <h2>Current Song</h2>
-            <div id="current-song-info">
-                <p class="no-song">No song playing</p>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 40 40" width="32" height="32">
+                    <circle cx="20" cy="20" r="18" fill="#1ed760"/>
+                    <path d="M14 12v16l14-8z" fill="#000"/>
+                </svg>
+                <span class="logo-text">MSPM</span>
             </div>
-        </section>
+            <nav class="nav">
+                <a href="#" class="nav-item active" data-target="home-section">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <span>Home</span>
+                </a>
+                <a href="#" class="nav-item" data-target="library-section">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1"/>
+                    </svg>
+                    <span>Library</span>
+                </a>
+                <a href="#" class="nav-item" data-target="playlist-section">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18V5l12-2v13"/>
+                        <circle cx="6" cy="18" r="3"/>
+                        <circle cx="18" cy="16" r="3"/>
+                    </svg>
+                    <span>Playlist</span>
+                </a>
+                <a href="#" class="nav-item" data-target="visualization-section">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                    <span>Visualization</span>
+                </a>
+            </nav>
+        </aside>
 
-        <section id="playback-controls" class="card">
-            <h2>Playback Controls</h2>
-            <div class="controls-row">
-                <button id="btn-prev" class="btn btn-control" title="Previous">⏮</button>
-                <button id="btn-play" class="btn btn-control btn-play" title="Play">▶</button>
-                <button id="btn-shuffle" class="btn btn-control" title="Shuffle">🔀</button>
-                <button id="btn-next" class="btn btn-control" title="Next">⏭</button>
-            </div>
-            <div class="repeat-row">
-                <label for="repeat-mode">Repeat Mode:</label>
-                <select id="repeat-mode">
-                    <option value="OFF">OFF</option>
-                    <option value="ONE">ONE</option>
-                    <option value="ALL">ALL</option>
-                </select>
-            </div>
-        </section>
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="search-bar">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input type="text" id="search-input" placeholder="What do you want to listen to?">
+                </div>
+                <div class="user-actions">
+                    <button class="btn btn-ghost">Sign Up</button>
+                    <button class="btn btn-secondary">Log In</button>
+                </div>
+            </header>
 
-        <!-- ══════ Song Library from CSV ══════ -->
-        <section id="library-section" class="card">
-            <h2>📚 Song Library <span id="library-total-badge" class="badge">0 songs</span></h2>
-            <p class="section-desc">Browse songs from CSV and add them to your playlist by filtering attributes.</p>
-
-            <div class="library-filters">
-                <div class="filter-row">
-                    <div class="filter-group">
-                        <label for="lib-filter-title">🔍 Title</label>
-                        <input type="text" id="lib-filter-title" placeholder="Filter by title...">
+            <div class="content" id="home-section">
+                <section id="current-song" class="card">
+                    <div class="card-header">
+                        <h2>Now Playing</h2>
                     </div>
-                    <div class="filter-group">
-                        <label for="lib-filter-artist">🎤 Artist</label>
-                        <select id="lib-filter-artist">
-                            <option value="">All Artists</option>
+                    <div class="current-song-display">
+                        <div class="current-song-art" id="current-song-art">
+                            <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#b3b3b3" stroke-width="1">
+                                <circle cx="12" cy="12" r="10"/>
+                                <circle cx="12" cy="12" r="4" fill="#b3b3b3"/>
+                                <line x1="12" y1="2" x2="12" y2="6"/>
+                                <line x1="12" y1="18" x2="12" y2="22"/>
+                                <line x1="2" y1="12" x2="6" y2="12"/>
+                                <line x1="18" y1="12" x2="22" y2="12"/>
+                            </svg>
+                        </div>
+                        <div id="current-song-info">
+                            <p class="no-song">No song playing</p>
+                        </div>
+                    </div>
+                    <div class="controls-row">
+                        <button id="btn-prev" class="btn btn-control" title="Previous">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6l-8.5 6z"/></svg>
+                        </button>
+                        <button id="btn-play" class="btn btn-control btn-play" title="Play">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5v14l11-7L8 5z"/></svg>
+                        </button>
+                        <button id="btn-shuffle" class="btn btn-control" title="Shuffle">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="16 3 21 3 21 8"/>
+                                <line x1="4" y1="20" x2="21" y2="3"/>
+                                <polyline points="21 16 21 21 16 21"/>
+                                <line x1="15" y1="15" x2="21" y2="21"/>
+                                <line x1="4" y1="4" x2="9" y2="9"/>
+                            </svg>
+                        </button>
+                        <button id="btn-next" class="btn btn-control" title="Next">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                        </button>
+                    </div>
+                    <div class="repeat-row">
+                        <span class="repeat-label">Repeat</span>
+                        <select id="repeat-mode">
+                            <option value="OFF">OFF</option>
+                            <option value="ONE">ONE</option>
+                            <option value="ALL">ALL</option>
                         </select>
                     </div>
-                </div>
-                <div class="filter-row">
-                    <div class="filter-group">
-                        <label for="lib-filter-min-dur">⏱ Min Duration (s)</label>
-                        <input type="number" id="lib-filter-min-dur" placeholder="e.g. 120" min="0">
+                </section>
+
+                <section id="search-section" class="card">
+                    <div class="card-header">
+                        <h2>Search Results</h2>
+                        <button id="btn-search" class="btn btn-primary">Search</button>
                     </div>
-                    <div class="filter-group">
-                        <label for="lib-filter-max-dur">⏱ Max Duration (s)</label>
-                        <input type="number" id="lib-filter-max-dur" placeholder="e.g. 480" min="0">
+                    <div id="search-results"></div>
+                </section>
+
+                <section id="add-song" class="card">
+                    <div class="card-header">
+                        <h2>Add Song</h2>
                     </div>
-                </div>
-                <div class="filter-actions">
-                    <button id="btn-lib-filter" class="btn btn-primary">🔎 Filter</button>
-                    <button id="btn-lib-reset" class="btn btn-secondary">↻ Reset</button>
-                    <button id="btn-lib-add-selected" class="btn btn-success" disabled>➕ Add Selected (0)</button>
-                    <button id="btn-lib-add-all-filtered" class="btn btn-accent">📥 Add All Filtered</button>
-                </div>
-            </div>
+                    <form id="add-song-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="song-id">ID</label>
+                                <input type="text" id="song-id" required placeholder="e.g. S001">
+                            </div>
+                            <div class="form-group">
+                                <label for="song-title">Title</label>
+                                <input type="text" id="song-title" required placeholder="Song title">
+                            </div>
+                            <div class="form-group">
+                                <label for="song-artist">Artist</label>
+                                <input type="text" id="song-artist" required placeholder="Artist name">
+                            </div>
+                            <div class="form-group">
+                                <label for="song-duration">Duration (s)</label>
+                                <input type="number" id="song-duration" required placeholder="e.g. 240">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Song</button>
+                    </form>
+                </section>
 
-            <div class="table-wrapper" id="library-table-wrapper">
-                <table id="library-table">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" id="lib-select-all" title="Select all on this page"></th>
-                            <th>ID</th>
-                            <th>Title</th>
-                            <th>Artist</th>
-                            <th>Duration</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="library-body"></tbody>
-                </table>
-            </div>
-
-            <div id="library-pagination" class="pagination">
-                <button id="lib-page-prev" class="btn btn-sm" disabled>◀ Prev</button>
-                <span id="lib-page-info">Page 1 / 1</span>
-                <button id="lib-page-next" class="btn btn-sm" disabled>Next ▶</button>
-            </div>
-        </section>
-
-        <section id="search-section" class="card">
-            <h2>Search</h2>
-            <div class="search-row">
-                <input type="text" id="search-input" placeholder="Search song title...">
-                <button id="btn-search" class="btn btn-primary">Search</button>
-            </div>
-            <div id="search-results"></div>
-        </section>
-
-        <section id="add-song" class="card">
-            <h2>Add Song</h2>
-            <form id="add-song-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="song-id">ID</label>
-                        <input type="text" id="song-id" required>
+                <section id="sort-section" class="card">
+                    <div class="card-header">
+                        <h2>Sort Playlist</h2>
                     </div>
-                    <div class="form-group">
-                        <label for="song-title">Title</label>
-                        <input type="text" id="song-title" required>
+                    <div class="sort-row">
+                        <select id="sort-type">
+                            <option value="id">By ID</option>
+                            <option value="title">By Title</option>
+                            <option value="artist">By Artist</option>
+                            <option value="playcount">By Play Count</option>
+                        </select>
+                        <button id="btn-sort" class="btn btn-primary">Sort</button>
                     </div>
-                    <div class="form-group">
-                        <label for="song-artist">Artist</label>
-                        <input type="text" id="song-artist" required>
+                </section>
+
+                <section id="library-section" class="card">
+                    <div class="card-header">
+                        <h2>Song Library <span id="library-total-badge" class="badge">0 songs</span></h2>
                     </div>
-                    <div class="form-group">
-                        <label for="song-duration">Duration (s)</label>
-                        <input type="number" id="song-duration" required>
+                    <p class="section-desc">Browse songs from the CSV catalog. Filter and add to your playlist.</p>
+                    <div class="library-filters">
+                        <div class="filter-row">
+                            <div class="filter-group">
+                                <label for="lib-filter-title">Title</label>
+                                <input type="text" id="lib-filter-title" placeholder="Filter by title...">
+                            </div>
+                            <div class="filter-group">
+                                <label for="lib-filter-artist">Artist</label>
+                                <select id="lib-filter-artist">
+                                    <option value="">All Artists</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="lib-filter-min-dur">Min Duration (s)</label>
+                                <input type="number" id="lib-filter-min-dur" placeholder="e.g. 120" min="0">
+                            </div>
+                            <div class="filter-group">
+                                <label for="lib-filter-max-dur">Max Duration (s)</label>
+                                <input type="number" id="lib-filter-max-dur" placeholder="e.g. 480" min="0">
+                            </div>
+                        </div>
+                        <div class="filter-actions">
+                            <button id="btn-lib-filter" class="btn btn-primary">Filter</button>
+                            <button id="btn-lib-reset" class="btn btn-ghost">Reset</button>
+                            <button id="btn-lib-add-selected" class="btn btn-secondary" disabled>Add Selected (0)</button>
+                            <button id="btn-lib-add-all-filtered" class="btn btn-primary">Add All Filtered</button>
+                        </div>
                     </div>
-                </div>
-                <button type="submit" class="btn btn-primary">Add Song</button>
-            </form>
-        </section>
+                    <div class="table-wrapper">
+                        <table id="library-table">
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" id="lib-select-all" title="Select all on this page"></th>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Artist</th>
+                                    <th>Duration</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="library-body"></tbody>
+                        </table>
+                    </div>
+                    <div id="library-pagination" class="pagination">
+                        <button id="lib-page-prev" class="btn btn-ghost" disabled>Prev</button>
+                        <span id="lib-page-info">Page 1 / 1</span>
+                        <button id="lib-page-next" class="btn btn-ghost" disabled>Next</button>
+                    </div>
+                </section>
 
-        <section id="sort-section" class="card">
-            <h2>Sort Playlist</h2>
-            <div class="sort-row">
-                <select id="sort-type">
-                    <option value="id">Sort by ID</option>
-                    <option value="title">Sort by Title</option>
-                </select>
-                <button id="btn-sort" class="btn btn-primary">Sort</button>
-            </div>
-        </section>
+                <section id="playlist-section" class="card">
+                    <div class="card-header">
+                        <h2>Your Playlist <span id="playlist-count-badge" class="badge">0 songs</span></h2>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="playlist-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Artist</th>
+                                    <th>Duration</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="playlist-body"></tbody>
+                        </table>
+                    </div>
+                </section>
 
-        <section id="playlist-section" class="card">
-            <h2>Playlist <span id="playlist-count-badge" class="badge">0 songs</span></h2>
-            <div class="table-wrapper">
-                <table id="playlist-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Title</th>
-                            <th>Artist</th>
-                            <th>Duration</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="playlist-body"></tbody>
-                </table>
-            </div>
-        </section>
+                <section id="recently-played" class="card">
+                    <div class="card-header">
+                        <h2>Recently Played</h2>
+                    </div>
+                    <ul id="history-stack"></ul>
+                </section>
 
-        <section id="recently-played" class="card">
-            <h2>Recently Played</h2>
-            <ul id="history-stack"></ul>
-        </section>
+                <section id="visualization-section" class="card">
+                    <div class="card-header">
+                        <h2>DSA Visualization</h2>
+                    </div>
+                    <div id="viz-playlist" class="viz-section">
+                        <h3>Circular Linked List</h3>
+                        <div id="circular-list"></div>
+                    </div>
+                    <div id="viz-history" class="viz-section">
+                        <h3>History Stack</h3>
+                        <div id="stack-display"></div>
+                    </div>
+                    <div id="viz-shuffle" class="viz-section">
+                        <h3>Shuffle Animation</h3>
+                        <div id="shuffle-animation" class="shuffle-hidden"></div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
 
-        <section id="visualization" class="card">
-            <h2>DSA Visualization</h2>
-            <div id="viz-playlist" class="viz-section">
-                <h3>Circular Linked List</h3>
-                <div id="circular-list"></div>
-            </div>
-            <div id="viz-history" class="viz-section">
-                <h3>History Stack</h3>
-                <div id="stack-display"></div>
-            </div>
-            <div id="viz-shuffle" class="viz-section">
-                <h3>Shuffle Animation</h3>
-                <div id="shuffle-animation" class="shuffle-hidden"></div>
-            </div>
-        </section>
-    </main>
-
+    <script>
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', e => {
+                e.preventDefault();
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
+                const target = document.getElementById(item.dataset.target);
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+    </script>
     <script src="js/api.js"></script>
     <script src="js/visualizer.js"></script>
     <script src="js/player.js"></script>
