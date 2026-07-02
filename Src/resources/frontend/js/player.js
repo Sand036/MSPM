@@ -338,9 +338,22 @@ function startTimer() {
         if (currentSong && timerSeconds >= currentSong.duration) {
             const mode = document.getElementById('repeat-mode').value;
             if (mode === 'ONE') {
+                // Lặp lại bài hiện tại: reset timer, không đổi bài
                 timerSeconds = 0;
                 updateTimerDisplay();
+            } else if (mode === 'OFF') {
+                // Hết playlist (bài cuối): dừng phát
+                const idx = currentPlaylist.findIndex(s => String(s.id) === String(currentSong.id));
+                if (idx >= currentPlaylist.length - 1) {
+                    stopTimer();
+                    isPlaying = false;
+                    updatePlayButton();
+                    renderCurrentSong(currentSong);
+                } else {
+                    onNext();
+                }
             } else {
+                // ALL: tự động sang bài tiếp
                 onNext();
             }
         }
@@ -452,40 +465,76 @@ function updatePlayButton() {
 }
 
 async function onNext() {
-    if (!currentSong || currentPlaylist.length === 0) {
-        renderCurrentSong(null);
-        return;
-    }
+    if (!currentSong || currentPlaylist.length === 0) return;
+
+    const mode = document.getElementById('repeat-mode').value;
+
     const idx = currentPlaylist.findIndex(s => String(s.id) === String(currentSong.id));
-    if (idx < 0) { renderCurrentSong(null); return; }
+    if (idx < 0) return;
 
     const isLast = idx + 1 >= currentPlaylist.length;
-    if (isLast) {
-        const mode = document.getElementById('repeat-mode').value;
-        if (mode !== 'ALL') {
-            renderCurrentSong(null);
-            return;
-        }
+
+    // RepeatMode.OFF ở bài cuối → dừng phát
+    if (isLast && mode === 'OFF') {
+        stopTimer();
+        isPlaying = false;
+        updatePlayButton();
+        renderCurrentSong(currentSong); // cập nhật trạng thái Paused
+        return;
     }
+
+    // Tính index bài tiếp theo: ALL/ONE thì vòng lại đầu nếu ở cuối
     const nextIdx = isLast ? 0 : idx + 1;
     const nextSong = currentPlaylist[nextIdx];
-    if (!nextSong) { renderCurrentSong(null); return; }
+    if (!nextSong) return;
 
-    await playSongById(nextSong.id);
+
+    pushHistory(currentSong);
+    currentSong = nextSong;
+    isPlaying = true;
+    resetTimer();
+    renderCurrentSong(nextSong);
+    startTimer();
+    highlightActiveSong(nextSong);
+    renderCircularList(currentPlaylist, nextSong.id);
+    updatePlayButton();
+
+    // Sync state với backend (non-blocking, không ảnh hưởng UI)
+    setCurrentSong(nextSong.id).catch(e => console.warn('setCurrentSong sync failed:', e));
 }
 
 async function onPrevious() {
-    if (!currentSong || currentPlaylist.length === 0) {
-        renderCurrentSong(null);
+    if (!currentSong || currentPlaylist.length === 0) return;
+
+    const mode = document.getElementById('repeat-mode').value;
+    const idx = currentPlaylist.findIndex(s => String(s.id) === String(currentSong.id));
+    if (idx < 0) return;
+
+    const isFirst = idx === 0;
+
+    // RepeatMode.OFF ở bài đầu → không làm gì / reset timer về 0
+    if (isFirst && mode === 'OFF') {
+        timerSeconds = 0;
+        updateTimerDisplay();
         return;
     }
-    const idx = currentPlaylist.findIndex(s => String(s.id) === String(currentSong.id));
-    if (idx <= 0) { renderCurrentSong(null); return; }
 
-    const prevSong = currentPlaylist[idx - 1];
-    if (!prevSong) { renderCurrentSong(null); return; }
+    // Tính index bài trước: ALL thì vòng về cuối
+    const prevIdx = isFirst ? currentPlaylist.length - 1 : idx - 1;
+    const prevSong = currentPlaylist[prevIdx];
+    if (!prevSong) return;
 
-    await playSongById(prevSong.id);
+    currentSong = prevSong;
+    isPlaying = true;
+    resetTimer();
+    renderCurrentSong(prevSong);
+    startTimer();
+    highlightActiveSong(prevSong);
+    renderCircularList(currentPlaylist, prevSong.id);
+    updatePlayButton();
+
+    // Sync state với backend (non-blocking, không ảnh hưởng UI)
+    setCurrentSong(prevSong.id).catch(e => console.warn('setCurrentSong sync failed:', e));
 }
 
 async function onShuffle() {
@@ -863,8 +912,15 @@ async function playSongById(id) {
             await loadPlaylist();
             await loadLibrary();
         }
-        const targetSong = currentPlaylist.find(s => String(s.id) === String(id));
+        const targetSong = currentPlaylist.find(s => String(s.id) === String(id)) || song;
         if (!targetSong) return;
+
+        // Sync currentSong với backend để /next và /previous hoạt động đúng
+        try {
+            await setCurrentSong(targetSong.id);
+        } catch (e) {
+            console.warn('setCurrentSong sync failed (non-critical):', e);
+        }
 
         currentSong = targetSong;
         isPlaying = true;

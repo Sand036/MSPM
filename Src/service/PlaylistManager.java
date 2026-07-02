@@ -15,7 +15,7 @@ import java.util.List;
 public class PlaylistManager {
 
     public enum RepeatMode { OFF, ONE, ALL }
-    private RepeatMode repeatMode = RepeatMode.ALL;
+    private RepeatMode repeatMode = RepeatMode.OFF;
 
     private final CircularLinkedList playlist;
     private Node currentNode; // bài đang phát

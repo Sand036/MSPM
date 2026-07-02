@@ -55,7 +55,7 @@ public class MainServer {
                         String title = extractJsonString(body, "title");
                         String artist = extractJsonString(body, "artist");
                         int duration = extractJsonInt(body, "duration");
-                        
+
                         Song s = new Song(id, title, artist, duration);
                         playlistManager.addSong(s);
                         sendResponse(exchange, 200, songToJson(s));
@@ -141,9 +141,28 @@ public class MainServer {
             }
         });
 
+        server.createContext("/set-current", exchange -> {
+            cors(exchange);
+            switch (exchange.getRequestMethod()) {
+                case "POST" -> {
+                    try {
+                        String body = readBody(exchange.getRequestBody());
+                        String id = extractJsonString(body, "id");
+                        boolean ok = playlistManager.setCurrentSong(id);
+                        sendResponse(exchange, 200, "{\"success\":" + ok + "}");
+                    } catch (IOException e) {
+                        sendResponse(exchange, 400, "{\"error\":\"Invalid request\"}");
+                    }
+                }
+                case "OPTIONS" -> exchange.sendResponseHeaders(200, -1);
+                default -> exchange.sendResponseHeaders(405, -1);
+            }
+        });
+
         server.createContext("/shuffle", exchange -> {
             cors(exchange);
             switch (exchange.getRequestMethod()) {
+
                 case "POST" -> {
                     Song current = playlistManager.getCurrentSong();
                     String currentId = (current != null) ? current.getId() : null;
@@ -173,7 +192,8 @@ public class MainServer {
                     try {
                         String body = readBody(exchange.getRequestBody());
                         String modeStr = extractJsonString(body, "mode");
-                        PlaylistManager.RepeatMode mode = PlaylistManager.RepeatMode.valueOf(modeStr.toUpperCase().trim());
+                        PlaylistManager.RepeatMode mode = PlaylistManager.RepeatMode
+                                .valueOf(modeStr.toUpperCase().trim());
                         playlistManager.setRepeatMode(mode);
                         sendResponse(exchange, 200, "{\"success\":true}");
                     } catch (IOException | IllegalArgumentException | NullPointerException e) {
@@ -192,7 +212,8 @@ public class MainServer {
                     Song[] hist = historyStack.getHistory();
                     List<Song> hList = new ArrayList<>();
                     for (Song s : hist) {
-                        if (s != null) hList.add(s);
+                        if (s != null)
+                            hList.add(s);
                     }
                     sendResponse(exchange, 200, songsToJson(hList));
                 }
@@ -208,11 +229,11 @@ public class MainServer {
                     String query = exchange.getRequestURI().getQuery();
                     if (query != null && query.startsWith("title=")) {
                         String title = java.net.URLDecoder.decode(query.substring(6), StandardCharsets.UTF_8);
-                        
+
                         Song[] arr = playlistManager.getSongsArray();
                         Song[] sorted = PlaylistSorter.sortByTitle(arr);
                         Song found = BinarySearcher.searchByTitle(sorted, title);
-                        
+
                         if (found != null) {
                             List<Song> res = new ArrayList<>();
                             res.add(found);
@@ -245,7 +266,7 @@ public class MainServer {
                     if (query != null && query.startsWith("type=")) {
                         type = query.substring(5);
                     }
-                    
+
                     Song[] arr = playlistManager.getSongsArray();
                     Song[] sorted;
                     if ("title".equalsIgnoreCase(type)) {
@@ -257,14 +278,15 @@ public class MainServer {
                     } else {
                         sorted = PlaylistSorter.sortById(arr);
                     }
-                    
+
                     playlistManager.clearPlaylist();
                     if (sorted != null) {
                         for (Song s : sorted) {
-                            if (s != null) playlistManager.addSong(s);
+                            if (s != null)
+                                playlistManager.addSong(s);
                         }
                     }
-                    
+
                     sendResponse(exchange, 200, songsToJson(playlistManager.getAllSongs()));
                 }
                 case "OPTIONS" -> exchange.sendResponseHeaders(200, -1);
@@ -287,19 +309,23 @@ public class MainServer {
                     int added = 0;
                     for (String rawId : ids) {
                         String id = rawId.trim().replace("\"", "");
-                        if (id.isEmpty()) continue;
+                        if (id.isEmpty())
+                            continue;
                         // Check not already in playlist
-                        if (playlistManager.findSongById(id) != null) continue;
+                        if (playlistManager.findSongById(id) != null)
+                            continue;
                         // Find in CSV library
                         for (Song s : csvLibrary) {
                             if (s.getId().equals(id)) {
-                                playlistManager.addSong(new Song(s.getId(), s.getTitle(), s.getArtist(), s.getDuration()));
+                                playlistManager
+                                        .addSong(new Song(s.getId(), s.getTitle(), s.getArtist(), s.getDuration()));
                                 added++;
                                 break;
                             }
                         }
                     }
-                    sendResponse(exchange, 200, "{\"added\":" + added + ",\"total\":" + playlistManager.getSize() + "}");
+                    sendResponse(exchange, 200,
+                            "{\"added\":" + added + ",\"total\":" + playlistManager.getSize() + "}");
                 } catch (IOException | NumberFormatException e) {
                     sendResponse(exchange, 400, "{\"error\":\"Invalid request\"}");
                 }
@@ -311,18 +337,25 @@ public class MainServer {
                     String artistFilter = extractJsonString(body, "artist");
                     int minDur = extractJsonInt(body, "minDuration");
                     int maxDur = extractJsonInt(body, "maxDuration");
-                    if (maxDur == 0) maxDur = Integer.MAX_VALUE;
+                    if (maxDur == 0)
+                        maxDur = Integer.MAX_VALUE;
 
                     int added = 0;
                     for (Song s : csvLibrary) {
-                        if (!titleFilter.isEmpty() && !s.getTitle().toLowerCase().contains(titleFilter.toLowerCase())) continue;
-                        if (!artistFilter.isEmpty() && !s.getArtist().toLowerCase().contains(artistFilter.toLowerCase())) continue;
-                        if (s.getDuration() < minDur || s.getDuration() > maxDur) continue;
-                        if (playlistManager.findSongById(s.getId()) != null) continue;
+                        if (!titleFilter.isEmpty() && !s.getTitle().toLowerCase().contains(titleFilter.toLowerCase()))
+                            continue;
+                        if (!artistFilter.isEmpty()
+                                && !s.getArtist().toLowerCase().contains(artistFilter.toLowerCase()))
+                            continue;
+                        if (s.getDuration() < minDur || s.getDuration() > maxDur)
+                            continue;
+                        if (playlistManager.findSongById(s.getId()) != null)
+                            continue;
                         playlistManager.addSong(new Song(s.getId(), s.getTitle(), s.getArtist(), s.getDuration()));
                         added++;
                     }
-                    sendResponse(exchange, 200, "{\"added\":" + added + ",\"total\":" + playlistManager.getSize() + "}");
+                    sendResponse(exchange, 200,
+                            "{\"added\":" + added + ",\"total\":" + playlistManager.getSize() + "}");
                 } catch (IOException | NumberFormatException e) {
                     sendResponse(exchange, 400, "{\"error\":\"Invalid request\"}");
                 }
@@ -338,9 +371,12 @@ public class MainServer {
 
                 List<Song> filtered = new ArrayList<>();
                 for (Song s : csvLibrary) {
-                    if (!titleFilter.isEmpty() && !s.getTitle().toLowerCase().contains(titleFilter.toLowerCase())) continue;
-                    if (!artistFilter.isEmpty() && !s.getArtist().toLowerCase().contains(artistFilter.toLowerCase())) continue;
-                    if (s.getDuration() < minDur || s.getDuration() > maxDur) continue;
+                    if (!titleFilter.isEmpty() && !s.getTitle().toLowerCase().contains(titleFilter.toLowerCase()))
+                        continue;
+                    if (!artistFilter.isEmpty() && !s.getArtist().toLowerCase().contains(artistFilter.toLowerCase()))
+                        continue;
+                    if (s.getDuration() < minDur || s.getDuration() > maxDur)
+                        continue;
                     filtered.add(s);
                 }
 
@@ -364,7 +400,8 @@ public class MainServer {
                 sb.append(",\"artists\":[");
                 int ai = 0;
                 for (String a : artistSet) {
-                    if (ai > 0) sb.append(",");
+                    if (ai > 0)
+                        sb.append(",");
                     sb.append("\"").append(escapeJson(a)).append("\"");
                     ai++;
                 }
@@ -393,7 +430,8 @@ public class MainServer {
                 if (file.exists()) {
                     try {
                         tempIs = new java.io.FileInputStream(file);
-                    } catch (java.io.FileNotFoundException e) {}
+                    } catch (java.io.FileNotFoundException e) {
+                    }
                 }
             }
             if (tempIs == null) {
@@ -431,9 +469,12 @@ public class MainServer {
     }
 
     private static String contentTypeForPath(String path) {
-        if (path.endsWith(".html")) return "text/html; charset=UTF-8";
-        if (path.endsWith(".css")) return "text/css; charset=UTF-8";
-        if (path.endsWith(".js")) return "application/javascript; charset=UTF-8";
+        if (path.endsWith(".html"))
+            return "text/html; charset=UTF-8";
+        if (path.endsWith(".css"))
+            return "text/css; charset=UTF-8";
+        if (path.endsWith(".js"))
+            return "application/javascript; charset=UTF-8";
         return "text/plain; charset=UTF-8";
     }
 
@@ -453,18 +494,21 @@ public class MainServer {
     }
 
     private static String songToJson(Song s) {
-        if (s == null) return "null";
+        if (s == null)
+            return "null";
         return String.format("{\"id\":\"%s\",\"title\":\"%s\",\"artist\":\"%s\",\"duration\":%d}",
                 escapeJson(s.getId()), escapeJson(s.getTitle()), escapeJson(s.getArtist()), s.getDuration());
     }
 
     private static String songsToJson(List<Song> songs) {
-        if (songs == null) return "[]";
+        if (songs == null)
+            return "[]";
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < songs.size(); i++) {
             if (songs.get(i) != null) {
                 sb.append(songToJson(songs.get(i)));
-                if (i < songs.size() - 1) sb.append(",");
+                if (i < songs.size() - 1)
+                    sb.append(",");
             }
         }
         // Remove trailing comma if last element was null
@@ -476,21 +520,27 @@ public class MainServer {
     }
 
     private static String escapeJson(String s) {
-        if (s == null) return "";
+        if (s == null)
+            return "";
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     /** Convert songs to JSON, with an `inPlaylist` flag for each song */
     private static String songsToJsonWithInPlaylist(List<Song> songs) {
-        if (songs == null) return "[]";
+        if (songs == null)
+            return "[]";
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < songs.size(); i++) {
             Song s = songs.get(i);
-            if (s == null) continue;
+            if (s == null)
+                continue;
             boolean inPlaylist = playlistManager.findSongById(s.getId()) != null;
-            if (sb.length() > 1) sb.append(",");
-            sb.append(String.format("{\"id\":\"%s\",\"title\":\"%s\",\"artist\":\"%s\",\"duration\":%d,\"inPlaylist\":%b}",
-                    escapeJson(s.getId()), escapeJson(s.getTitle()), escapeJson(s.getArtist()), s.getDuration(), inPlaylist));
+            if (sb.length() > 1)
+                sb.append(",");
+            sb.append(String.format(
+                    "{\"id\":\"%s\",\"title\":\"%s\",\"artist\":\"%s\",\"duration\":%d,\"inPlaylist\":%b}",
+                    escapeJson(s.getId()), escapeJson(s.getTitle()), escapeJson(s.getArtist()), s.getDuration(),
+                    inPlaylist));
         }
         sb.append("]");
         return sb.toString();
@@ -500,7 +550,8 @@ public class MainServer {
     private static String extractJsonArrayString(String json, String key) {
         String search = "\"" + key + "\":[";
         int start = json.indexOf(search);
-        if (start == -1) return "";
+        if (start == -1)
+            return "";
         start += search.length();
         int end = json.indexOf("]", start);
         return end == -1 ? "" : json.substring(start, end);
@@ -508,7 +559,8 @@ public class MainServer {
 
     /** Parse a query parameter from a URL query string */
     private static String getQueryParam(String query, String key) {
-        if (query == null) return "";
+        if (query == null)
+            return "";
         for (String param : query.split("&")) {
             String[] parts = param.split("=", 2);
             if (parts.length == 2 && parts[0].equals(key)) {
@@ -520,7 +572,8 @@ public class MainServer {
 
     /** Safe int parsing with default */
     private static int parseIntSafe(String s, int defaultValue) {
-        if (s == null || s.isEmpty()) return defaultValue;
+        if (s == null || s.isEmpty())
+            return defaultValue;
         try {
             return Integer.parseInt(s);
         } catch (NumberFormatException e) {
@@ -542,7 +595,8 @@ public class MainServer {
     private static String extractJsonString(String json, String key) {
         String search = "\"" + key + "\":\"";
         int start = json.indexOf(search);
-        if (start == -1) return "";
+        if (start == -1)
+            return "";
         start += search.length();
         int end = json.indexOf("\"", start);
         return end == -1 ? "" : json.substring(start, end);
@@ -551,13 +605,15 @@ public class MainServer {
     private static int extractJsonInt(String json, String key) {
         String search = "\"" + key + "\":";
         int start = json.indexOf(search);
-        if (start == -1) return 0;
+        if (start == -1)
+            return 0;
         start += search.length();
         int end = start;
         while (end < json.length() && Character.isDigit(json.charAt(end))) {
             end++;
         }
-        if (start == end) return 0;
+        if (start == end)
+            return 0;
         return Integer.parseInt(json.substring(start, end));
     }
 }

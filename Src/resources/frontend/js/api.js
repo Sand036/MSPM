@@ -49,6 +49,11 @@ function playSong() {
     return request('POST', '/play');
 }
 
+function setCurrentSong(id) {
+    return request('POST', '/set-current', { id });
+}
+
+
 function setRepeatMode(mode) {
     return request('POST', '/repeat', { mode });
 }
