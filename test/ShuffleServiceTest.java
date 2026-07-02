@@ -70,7 +70,8 @@ public class ShuffleServiceTest {
         System.out.println("\n[TC-SS-01] Constructor with null historyStack throws");
         boolean thrown = false;
         try {
-            new ShuffleService(null);
+            ShuffleService ss = new ShuffleService(null);
+            assertNull("Should throw exception", ss);
         } catch (IllegalArgumentException e) {
             thrown = true;
         }
@@ -82,7 +83,8 @@ public class ShuffleServiceTest {
         System.out.println("\n[TC-SS-02] Constructor(null, seed) throws");
         boolean thrown = false;
         try {
-            new ShuffleService(null, 42L);
+            ShuffleService ss = new ShuffleService(null, 42L);
+            assertNull("Should throw exception", ss);
         } catch (IllegalArgumentException e) {
             thrown = true;
         }
@@ -180,11 +182,6 @@ public class ShuffleServiceTest {
     /** TC-SS-08: Shuffle thực sự thay đổi thứ tự (seed chọn sao cho đổi) */
     static void testShuffleChangesOrder() {
         System.out.println("\n[TC-SS-08] Shuffle actually changes order (statistical)");
-        Song s1 = song("1", "A");
-        Song s2 = song("2", "B");
-        Song s3 = song("3", "C");
-        Song s4 = song("4", "D");
-        Song s5 = song("5", "E");
 
         // Thử nhiều seed, ít nhất 1 seed phải cho thứ tự khác
         boolean orderChanged = false;
@@ -312,9 +309,6 @@ public class ShuffleServiceTest {
     /** TC-SS-16: Gọi shuffle nhiều lần liên tiếp không crash */
     static void testMultipleShufflesNoCrash() {
         System.out.println("\n[TC-SS-16] Multiple consecutive shuffles do not crash");
-        Song s1 = song("1", "A");
-        Song s2 = song("2", "B");
-        Song s3 = song("3", "C");
         HistoryStack hs = new HistoryStack();
         ShuffleService ss = new ShuffleService(hs);
 

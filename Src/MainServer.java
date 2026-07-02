@@ -387,11 +387,20 @@ public class MainServer {
                 return;
             }
             String resourcePath = "/frontend" + path;
-            try (InputStream is = MainServer.class.getResourceAsStream(resourcePath)) {
-                if (is == null) {
-                    exchange.sendResponseHeaders(404, -1);
-                    return;
+            InputStream tempIs = MainServer.class.getResourceAsStream(resourcePath);
+            if (tempIs == null) {
+                java.io.File file = new java.io.File("src/resources" + resourcePath);
+                if (file.exists()) {
+                    try {
+                        tempIs = new java.io.FileInputStream(file);
+                    } catch (Exception e) {}
                 }
+            }
+            if (tempIs == null) {
+                exchange.sendResponseHeaders(404, -1);
+                return;
+            }
+            try (InputStream is = tempIs) {
                 byte[] bytes = is.readAllBytes();
                 String contentType = contentTypeForPath(path);
 
@@ -413,6 +422,10 @@ public class MainServer {
             if (is != null) {
                 return SongDataGenerator.importFromCSV(is);
             }
+        }
+        java.io.File file = new java.io.File("src/resources/songs_10k.csv");
+        if (file.exists()) {
+            return SongDataGenerator.importFromCSV("src/resources/songs_10k.csv");
         }
         return SongDataGenerator.importFromCSV("songs_10k.csv");
     }
