@@ -393,7 +393,7 @@ public class MainServer {
                 if (file.exists()) {
                     try {
                         tempIs = new java.io.FileInputStream(file);
-                    } catch (Exception e) {}
+                    } catch (java.io.FileNotFoundException e) {}
                 }
             }
             if (tempIs == null) {
