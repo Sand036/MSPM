@@ -1,5 +1,6 @@
 function renderCircularList(songs, currentId) {
     const container = document.getElementById('circular-list');
+    if (!container) return; // element không tồn tại trong HTML hiện tại
     const repeatMode = document.getElementById('repeat-mode').value;
     if (!songs || songs.length === 0) {
         container.innerHTML = '<span style="color:#666;">Playlist is empty</span>';
@@ -43,6 +44,7 @@ function renderCircularList(songs, currentId) {
 
 function renderHistoryStack(history) {
     const container = document.getElementById('stack-display');
+    if (!container) return; // element không tồn tại trong HTML hiện tại
     if (!history || history.length === 0) {
         container.innerHTML = '<div style="color:#666;">No history</div>';
         return;
@@ -57,6 +59,11 @@ function renderHistoryStack(history) {
 
 function showShuffleAnimation(callback) {
     const el = document.getElementById('shuffle-animation');
+    if (!el) {
+        // element không tồn tại, thực thi callback ngay
+        if (callback) callback();
+        return;
+    }
     el.textContent = 'Shuffling playlist...';
     el.className = 'shuffle-visible';
 

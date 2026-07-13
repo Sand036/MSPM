@@ -341,20 +341,9 @@ function startTimer() {
                 // Lặp lại bài hiện tại: reset timer, không đổi bài
                 timerSeconds = 0;
                 updateTimerDisplay();
-            } else if (mode === 'OFF') {
-                // Hết playlist (bài cuối): dừng phát
-                const idx = currentPlaylist.findIndex(s => String(s.id) === String(currentSong.id));
-                if (idx >= currentPlaylist.length - 1) {
-                    stopTimer();
-                    isPlaying = false;
-                    updatePlayButton();
-                    renderCurrentSong(currentSong);
-                } else {
-                    onNext();
-                }
             } else {
-                // ALL: tự động sang bài tiếp
-                onNext();
+                // OFF hoặc ALL: sang bài tiếp (autoAdvance=true để OFF dừng ở bài cuối)
+                onNext(true);
             }
         }
     }, 1000);
@@ -464,18 +453,26 @@ function updatePlayButton() {
     updateNowPlayingBar(currentSong);
 }
 
-async function onNext() {
-    if (!currentSong || currentPlaylist.length === 0) return;
+async function onNext(autoAdvance = false) {
+    console.log('[onNext] called. autoAdvance=', autoAdvance, 'currentSong=', currentSong?.id, 'playlist.length=', currentPlaylist.length);
+    if (!currentSong || currentPlaylist.length === 0) {
+        console.warn('[onNext] early return: no currentSong or empty playlist');
+        return;
+    }
 
     const mode = document.getElementById('repeat-mode').value;
 
     const idx = currentPlaylist.findIndex(s => String(s.id) === String(currentSong.id));
-    if (idx < 0) return;
+    console.log('[onNext] idx=', idx, 'mode=', mode);
 
-    const isLast = idx + 1 >= currentPlaylist.length;
+    // Nếu không tìm thấy bài hiện tại trong playlist → chơi bài đầu tiên
+    const effectiveIdx = idx < 0 ? -1 : idx;
+    const isLast = effectiveIdx + 1 >= currentPlaylist.length;
+    console.log('[onNext] effectiveIdx=', effectiveIdx, 'isLast=', isLast);
 
-    // RepeatMode.OFF ở bài cuối → dừng phát
-    if (isLast && mode === 'OFF') {
+    // Chỉ dừng phát khi bài TỰ HẾT (autoAdvance=true) + mode OFF + bài cuối
+    if (autoAdvance && isLast && mode === 'OFF') {
+        console.log('[onNext] auto-stop at end of playlist (OFF mode)');
         stopTimer();
         isPlaying = false;
         updatePlayButton();
@@ -483,11 +480,16 @@ async function onNext() {
         return;
     }
 
-    // Tính index bài tiếp theo: ALL/ONE thì vòng lại đầu nếu ở cuối
-    const nextIdx = isLast ? 0 : idx + 1;
+    // Tính index bài tiếp theo
+    // - Nếu không tìm thấy bài hiện tại (idx < 0): về bài đầu tiên
+    // - Nếu là bài cuối: vòng lại đầu (ALL/ONE) hoặc đầu khi nhấn thủ công
+    const nextIdx = effectiveIdx < 0 ? 0 : (isLast ? 0 : effectiveIdx + 1);
     const nextSong = currentPlaylist[nextIdx];
-    if (!nextSong) return;
-
+    console.log('[onNext] nextIdx=', nextIdx, 'nextSong=', nextSong?.id);
+    if (!nextSong) {
+        console.warn('[onNext] nextSong is null/undefined!');
+        return;
+    }
 
     pushHistory(currentSong);
     currentSong = nextSong;
@@ -508,18 +510,33 @@ async function onPrevious() {
 
     const mode = document.getElementById('repeat-mode').value;
     const idx = currentPlaylist.findIndex(s => String(s.id) === String(currentSong.id));
-    if (idx < 0) return;
+
+    // Nếu không tìm thấy bài hiện tại → fallback về bài cuối cùng
+    if (idx < 0) {
+        const lastSong = currentPlaylist[currentPlaylist.length - 1];
+        if (!lastSong) return;
+        currentSong = lastSong;
+        isPlaying = true;
+        resetTimer();
+        renderCurrentSong(lastSong);
+        startTimer();
+        highlightActiveSong(lastSong);
+        renderCircularList(currentPlaylist, lastSong.id);
+        updatePlayButton();
+        setCurrentSong(lastSong.id).catch(e => console.warn('setCurrentSong sync failed:', e));
+        return;
+    }
 
     const isFirst = idx === 0;
 
-    // RepeatMode.OFF ở bài đầu → không làm gì / reset timer về 0
+    // RepeatMode.OFF ở bài đầu khi nhấn thủ công → vòng về cuối playlist
     if (isFirst && mode === 'OFF') {
         timerSeconds = 0;
         updateTimerDisplay();
         return;
     }
 
-    // Tính index bài trước: ALL thì vòng về cuối
+    // Tính index bài trước: vòng về cuối nếu đang ở bài đầu
     const prevIdx = isFirst ? currentPlaylist.length - 1 : idx - 1;
     const prevSong = currentPlaylist[prevIdx];
     if (!prevSong) return;
