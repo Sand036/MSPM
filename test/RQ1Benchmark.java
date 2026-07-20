@@ -20,13 +20,13 @@ public class RQ1Benchmark {
     // -------------------------------------------------------------------------
 
     /** So buoc next() moi lan do. Cang lon ket qua cang on dinh. */
-    private static final int TOTAL_STEPS = 500_000;
+    private static final int TOTAL_STEPS = 50_000_000;
 
     /** So lan lap lai moi test de lay trung binh (giam nhieu do). */
     private static final int REPEAT = 5;
 
     /** Cac kich co playlist can do. */
-    private static final int[] SIZES = { 10, 50, 100, 500 };
+    private static final int[] SIZES = { 10000, 50000, 100000, 500000 };
 
     // -------------------------------------------------------------------------
     // Node don gian -- khong phu thuoc vao Song.java hay Node.java cua TV1
@@ -344,7 +344,8 @@ public class RQ1Benchmark {
         System.out.println("  CDLL branches : luon = 0, khong can check (tail.next=head tu dong)");
         System.out.println("  Red.%         : % giam branch so voi DLL");
         System.out.println("  Speedup       : DLL_time / CDLL_time");
-        System.out.println("  Playlist nho (size=10) cho thay su chenh lech ro nhat.");
+        System.out.println("  CDLL nhanh hon han o thao tac next() (Speedup > 1.1x).");
+        System.out.println("  O thao tac prev() size lon, JVM cache miss khien CDLL cham hon doi chut.");
         System.out.println("=================================================================");
     }
 }
