@@ -120,12 +120,10 @@ public class RQ1Benchmark {
             tail = tail.next;
         }
 
-        long branchCount = 0;
         DllNode current = head;
 
         long startTime = System.nanoTime();
         for (int step = 0; step < TOTAL_STEPS; step++) {
-            branchCount++; // moi buoc deu phai check: if (current.next == null)?
             if (current.next == null) {
                 current = head; // het list, quay lai dau (RepeatMode.ALL)
             } else {
@@ -134,7 +132,7 @@ public class RQ1Benchmark {
         }
         long endTime = System.nanoTime();
 
-        return new long[] { branchCount, endTime - startTime };
+        return new long[] { TOTAL_STEPS, endTime - startTime };
     }
 
     // -------------------------------------------------------------------------
@@ -182,12 +180,10 @@ public class RQ1Benchmark {
             tail = tail.next;
         }
 
-        long branchCount = 0;
         DllNode current = tail; // bat dau tu tail de test prev()
 
         long startTime = System.nanoTime();
         for (int step = 0; step < TOTAL_STEPS; step++) {
-            branchCount++; // moi buoc phai check: if (current.prev == null)?
             if (current.prev == null) {
                 current = tail; // het list, quay lai cuoi (RepeatMode.ALL)
             } else {
@@ -196,7 +192,7 @@ public class RQ1Benchmark {
         }
         long endTime = System.nanoTime();
 
-        return new long[] { branchCount, endTime - startTime };
+        return new long[] { TOTAL_STEPS, endTime - startTime };
     }
 
     // -------------------------------------------------------------------------
@@ -257,8 +253,9 @@ public class RQ1Benchmark {
             double dllMs, double cdllMs) {
         double reduction = 100.0 * (dllBranch - cdllBranch) / dllBranch;
         double speedup = dllMs / cdllMs;
-        System.out.printf("%-8d  %-14d  %-14d  %-8.1f  %-10.2f  %-10.2f  %-8.2fx%n",
-                size, dllBranch, cdllBranch, reduction, dllMs, cdllMs, speedup);
+        String speedupStr = String.format("%.2fx", speedup);
+        System.out.printf("%-8d  %-14d  %-14d  %-8.1f  %-10.2f  %-10.2f  %-8s%n",
+                size, dllBranch, cdllBranch, reduction, dllMs, cdllMs, speedupStr);
     }
 
     // -------------------------------------------------------------------------
@@ -343,9 +340,7 @@ public class RQ1Benchmark {
         System.out.println("  DLL branches  : so lan phai check if(next==null) hoac if(prev==null)");
         System.out.println("  CDLL branches : luon = 0, khong can check (tail.next=head tu dong)");
         System.out.println("  Red.%         : % giam branch so voi DLL");
-        System.out.println("  Speedup       : DLL_time / CDLL_time");
-        System.out.println("  CDLL nhanh hon han o thao tac next() (Speedup > 1.1x).");
-        System.out.println("  O thao tac prev() size lon, JVM cache miss khien CDLL cham hon doi chut.");
+        System.out.println("  Speedup       : DLL_time / CDLL_time (> 1.0: CDLL nhanh hon)");
         System.out.println("=================================================================");
     }
 }
